@@ -358,31 +358,50 @@
 }
 
 .radar-chart {
-  width: 8rem;
-  height: 8rem;
+  width: 14rem;
+  height: 14rem;
   position: relative;
+<<<<<<< Updated upstream
   margin: 0 0 1rem 0;
+=======
+  margin: 0 auto 0.5rem auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+>>>>>>> Stashed changes
 }
 
-.radar-circles {
+.radar-grid {
   width: 100%;
   height: 100%;
   position: relative;
+<<<<<<< Updated upstream
 }
 
 .radar-circle {
   position: absolute;
+=======
+>>>>>>> Stashed changes
   border: 2px solid #d1d5db;
-  border-radius: 50%;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-.radar-circle.outer {
-  width: 100%;
+.grid-line {
+  position: absolute;
+  background: #e2e8f0;
+}
+
+.grid-line.vertical-1 {
+  left: 33.33%;
+  top: 0;
+  width: 1px;
   height: 100%;
   top: 0;
   left: 0;
 }
 
+<<<<<<< Updated upstream
 .radar-circle.middle {
   width: 75%;
   height: 75%;
@@ -397,27 +416,98 @@
   top: 25%;
   left: 25%;
   border-color: #6b7280;
+=======
+.grid-line.vertical-2 {
+  left: 66.66%;
+  top: 0;
+  width: 1px;
+  height: 100%;
 }
 
-.radar-center {
+.grid-line.horizontal-1 {
+  top: 33.33%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+>>>>>>> Stashed changes
+}
+
+.grid-line.horizontal-2 {
+  top: 66.66%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.radar-device {
   position: absolute;
-  top: 50%;
+  bottom: 15%;
   left: 50%;
+<<<<<<< Updated upstream
   width: 0.75rem;
   height: 0.75rem;
   background: #ef4444;
   border-radius: 50%;
   transform: translate(-50%, -50%);
+=======
+  width: 1rem;
+  height: 1rem;
+  background: #5259c4;
+  border-radius: 0.25rem;
+  transform: translate(-50%, 50%);
+  z-index: 3;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.legend-dot.device {
+  background: #5259c4;
+  border-radius: 0.125rem;
+  width: 0.5rem;
+  height: 0.5rem;
+>>>>>>> Stashed changes
 }
 
 .radar-target {
   position: absolute;
+<<<<<<< Updated upstream
   top: 2rem;
+=======
+  top: 25%;
+>>>>>>> Stashed changes
   left: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.75rem;
+  height: 0.75rem;
   background: #10b981;
   border-radius: 50%;
+<<<<<<< Updated upstream
+=======
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 레이더 방향 표시 */
+.radar-directions {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.direction {
+  position: absolute;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.direction.north {
+  top: -1.5rem;
+  left: 50%;
+>>>>>>> Stashed changes
   transform: translateX(-50%);
 }
 
@@ -432,8 +522,13 @@
 
 .radar-legend {
   display: flex;
+<<<<<<< Updated upstream
   flex-direction: column;
   gap: 0.25rem;
+=======
+  flex-direction: row;
+  gap: 2rem;
+>>>>>>> Stashed changes
   font-size: 0.75rem;
 }
 
@@ -639,6 +734,93 @@
     opacity: 0.5;
   }
 }
+
+/* 탭 네비게이션 스타일 */
+.tab-navigation {
+  display: flex;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: #6b7280;
+  text-align: center;
+}
+
+.tab-button.active {
+  background: #5259c4;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button:hover:not(.active) {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.tab-content {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 추적 정보 섹션 스타일 */
+.tracking-info-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+  margin-bottom: 1.5rem;
+}
+
+.tracking-info-section h3 {
+  color: #1f2937;
+  font-weight: bold;
+  font-size: 1.125rem;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+}
+
+/* 레이더 컨테이너 중앙 정렬 */
+.radar-container-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* 추적 정보 2x2 그리드 */
+.tracking-sections-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* 반응형 - 모바일에서는 1열로 */
+@media (max-width: 768px) {
+  .tracking-sections-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 /* 반응형 디자인 */
 @media (max-width: 480px) {
