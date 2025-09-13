@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
+import { deviceAPI, sensorAPI, trackingAPI, scheduleAPI } from '../services/api';
+
 
 const Dashboard = () => {
   // 상태 관리
   const [activeTab, setActiveTab] = useState('대시보드');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [temperature, setTemperature] = useState(28.5);
   const [humidity, setHumidity] = useState(65);
   const [battery, setBattery] = useState(85);
@@ -15,6 +19,161 @@ const Dashboard = () => {
   const [distance, setDistance] = useState(2.3); // 거리
   const [direction, setDirection] = useState('북쪽'); // 방향
   
+// useEffect 추가하여 컴포넌트 로드 시 데이터 가져오기
+  useEffect(() => {
+    if (activeTab === '대시보드') {
+      loadDashboardData();
+    } else if (activeTab === '스케줄 관리') {
+      loadSchedules();
+    }
+  }, [activeTab]);
+
+  // 스케줄 데이터 로드 함수
+  const loadSchedules = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await scheduleAPI.getAll();
+      const backendSchedules = response.data.schedules;
+      
+      // 백엔드 데이터를 프론트엔드 형식으로 변환
+      const formattedSchedules = backendSchedules.map(schedule => {
+        // 숫자 요일을 한글로 변환
+        const dayMap = {1: '월', 2: '화', 3: '수', 4: '목', 5: '금', 6: '토', 7: '일'};
+        const koreanDays = schedule.days_of_week.map(dayNum => dayMap[dayNum]);
+        
+        return {
+          id: schedule.id,
+          title: schedule.title,
+          time: `${schedule.start_time} - ${schedule.end_time}`,
+          intensity: `${schedule.intensity}%`,
+          mode: schedule.mode,
+          repeat: koreanDays.join(', '), // 한글 요일로 변환
+          isActive: schedule.is_active
+        };
+      });
+      
+      setSchedules(formattedSchedules);
+    } catch (err) {
+      setError('스케줄을 불러오는 중 오류가 발생했습니다.');
+      console.error('Schedule loading error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+
+  // 대시보드 데이터 로드 함수
+  const loadDashboardData = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // 병렬로 여러 API 호출
+      const [deviceResponse, sensorResponse, trackingResponse] = await Promise.all([
+        deviceAPI.getStatus(),
+        sensorAPI.getLatestData(),
+        trackingAPI.getLatestData()
+      ]);
+      
+      // 기기 상태 업데이트
+      const deviceData = deviceResponse.data;
+      setIsRunning(deviceData.is_running);
+      setMistLevel(deviceData.spray_intensity);
+      setSelectedMode(deviceData.tracking_mode);
+      
+      // 센서 데이터 업데이트
+      const sensorData = sensorResponse.data;
+      setTemperature(sensorData.temperature);
+      setHumidity(sensorData.humidity);
+      setBattery(sensorData.battery_level);
+      setWaterTank(sensorData.water_tank_level);
+      
+      // 추적 데이터 업데이트
+      const trackingData = trackingResponse.data;
+      setHumanDetected(trackingData.human_detected);
+      setDistance(trackingData.distance);
+      setDirection(trackingData.direction);
+      
+    } catch (err) {
+      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      console.error('Data loading error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  // 기기 시작/정지 함수 수정
+  const handleDeviceToggle = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      if (isRunning) {
+        await deviceAPI.stop();
+        setIsRunning(false);
+      } else {
+        await deviceAPI.start();
+        setIsRunning(true);
+      }
+    } catch (err) {
+      setError('기기 제어 중 오류가 발생했습니다.');
+      console.error('Device control error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 분사 강도 변경 함수 수정
+  const handleSprayIntensityChange = async (newIntensity) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await deviceAPI.setSprayIntensity(newIntensity);
+      setMistLevel(newIntensity);
+    } catch (err) {
+      setError('분사 강도 설정 중 오류가 발생했습니다.');
+      console.error('Spray intensity error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 추적 모드 변경 함수 수정
+  const handleTrackingModeChange = async (mode) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await deviceAPI.setTrackingMode(mode);
+      setSelectedMode(mode);
+    } catch (err) {
+      setError('추적 모드 설정 중 오류가 발생했습니다.');
+      console.error('Tracking mode error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 긴급 정지 함수 수정
+  const handleEmergencyStop = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await deviceAPI.stop();
+      setIsRunning(false);
+      setMistLevel(0);
+    } catch (err) {
+      setError('긴급 정지 중 오류가 발생했습니다.');
+      console.error('Emergency stop error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   // 스케줄 상태 관리
   const [schedules, setSchedules] = useState([
     {
@@ -166,11 +325,20 @@ const Dashboard = () => {
   };
 
   // 스케줄 삭제 핸들러
-  const handleDeleteSchedule = (scheduleId) => {
+  const handleDeleteSchedule = async (scheduleId) => {
     if (window.confirm('이 스케줄을 삭제하시겠습니까?')) {
-      setSchedules(prevSchedules => 
-        prevSchedules.filter(schedule => schedule.id !== scheduleId)
-      );
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        await scheduleAPI.delete(scheduleId);
+        await loadSchedules(); // 목록 새로고침
+      } catch (err) {
+        setError('스케줄 삭제 중 오류가 발생했습니다.');
+        console.error('Schedule deletion error:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -211,20 +379,34 @@ const Dashboard = () => {
     }));
   };
 
-  const handleCreateSchedule = () => {
+  const handleCreateSchedule = async () => {
     if (newSchedule.title && newSchedule.startTime && newSchedule.endTime && newSchedule.selectedDays.length > 0) {
-      const newId = Math.max(...schedules.map(s => s.id)) + 1;
-      const newScheduleItem = {
-        id: newId,
-        title: newSchedule.title,
-        time: `${newSchedule.startTime} - ${newSchedule.endTime}`,
-        intensity: `${newSchedule.intensity}%`,
-        mode: newSchedule.mode,
-        repeat: newSchedule.selectedDays.join(', '),
-        isActive: newSchedule.isEnabled
-      };
-      setSchedules(prev => [...prev, newScheduleItem]);
-      closeNewScheduleModal();
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const scheduleData = {
+          title: newSchedule.title,
+          start_time: newSchedule.startTime,
+          end_time: newSchedule.endTime,
+          days_of_week: newSchedule.selectedDays.map(day => {
+            const dayMap = {'월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 7};
+            return dayMap[day];
+          }),
+          intensity: newSchedule.intensity,
+          mode: newSchedule.mode,
+          is_active: newSchedule.isEnabled
+        };
+        
+        await scheduleAPI.create(scheduleData);
+        await loadSchedules(); // 목록 새로고침
+        closeNewScheduleModal();
+      } catch (err) {
+        setError('스케줄 생성 중 오류가 발생했습니다.');
+        console.error('Schedule creation error:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -387,7 +569,14 @@ const Dashboard = () => {
 
         {activeTab === '제어' && (
           <div className="tab-content">
-            {/* 기기 제어와 추적 제어 - 같은 줄 */}
+            {/* 에러 메시지 표시 */}
+            {error && (
+              <div className="error-message">
+                {error}
+                <button onClick={() => setError(null)}>×</button>
+              </div>
+            )}
+            
             <div className="controls-row">
               {/* 기기 제어 */}
               <div className="control-section-half">
@@ -399,14 +588,21 @@ const Dashboard = () => {
                 <div className="control-content-vertical">
                   {/* 시작/일시정지 버튼 */}
                   <button 
-                    onClick={() => setIsRunning(!isRunning)}
-                    className={`control-button ${isRunning ? 'pause-button' : 'start-button'}`}
+                    onClick={handleDeviceToggle}
+                    disabled={isLoading}
+                    className={`control-button ${isRunning ? 'pause-button' : 'start-button'} ${isLoading ? 'loading' : ''}`}
                   >
-                    {isRunning ? 
-                      <img src="/assets/icons/pause.svg" alt="pause" className="button-icon" /> : 
-                      <img src="/assets/icons/start.svg" alt="start" className="button-icon" />
-                    }
-                    <span>{isRunning ? '일시정지' : '시작'}</span>
+                    {isLoading ? (
+                      <span>처리중...</span>
+                    ) : (
+                      <>
+                        {isRunning ? 
+                          <img src="/assets/icons/pause.svg" alt="pause" className="button-icon" /> : 
+                          <img src="/assets/icons/start.svg" alt="start" className="button-icon" />
+                        }
+                        <span>{isRunning ? '일시정지' : '시작'}</span>
+                      </>
+                    )}
                   </button>
 
                   {/* 분사 강도 조절 */}
@@ -420,7 +616,8 @@ const Dashboard = () => {
                         min="0"
                         max="100"
                         value={mistLevel}
-                        onChange={(e) => setMistLevel(e.target.value)}
+                        onChange={(e) => handleSprayIntensityChange(e.target.value)}
+                        disabled={isLoading}
                         className="slider"
                         style={{
                           background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${mistLevel}%, #e5e7eb ${mistLevel}%, #e5e7eb 100%)`
@@ -432,7 +629,8 @@ const Dashboard = () => {
                   {/* 긴급 정지 버튼 */}
                   <button 
                     className="stop-button-compact"
-                    onClick={handleStopClick}
+                    onClick={handleEmergencyStop}
+                    disabled={isLoading}
                   >
                     <img src="/assets/icons/stop.svg" alt="stop" className="button-icon" />
                     <span>긴급 정지</span>
@@ -454,7 +652,8 @@ const Dashboard = () => {
                       {['자동', '수동', '끄기'].map((mode) => (
                         <button
                           key={mode}
-                          onClick={() => setSelectedMode(mode)}
+                          onClick={() => handleTrackingModeChange(mode)}
+                          disabled={isLoading}
                           className={`mode-button-full ${
                             mode === '자동' && selectedMode === mode ? 'active-blue' :
                             mode === '수동' && selectedMode === mode ? 'active-white' :
