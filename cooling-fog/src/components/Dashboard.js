@@ -343,7 +343,7 @@ const Dashboard = () => {
                 unit="%" 
                 icon={<img src="/assets/icons/battery.svg" alt="battery" className="card-icon" />}
                 showProgress={true}
-                progressColor="blue"
+                progressColor="purple"
               />
               <StatusCard 
                 title="물탱크" 
@@ -351,7 +351,7 @@ const Dashboard = () => {
                 unit="%" 
                 icon={<img src="/assets/icons/water-tank-icon.svg" alt="water-tank" className="card-icon" />}
                 showProgress={true}
-                progressColor="purple"
+                progressColor="blue"
               />
             </div>
 
