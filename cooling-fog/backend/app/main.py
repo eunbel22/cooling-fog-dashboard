@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from app.database import engine, get_db
 from app.models import device, sensor, schedule
@@ -14,6 +15,15 @@ app = FastAPI(title="CoolingFog API", version="1.0.0")
 # 라우터 포함
 app.include_router(device_router.router)
 app.include_router(schedule_router.router)
+
+# CORS 설정 (프론트엔드 연동용)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # React 개발 서버
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
