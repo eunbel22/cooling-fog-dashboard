@@ -3,6 +3,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   // 상태 관리
+  const [activeTab, setActiveTab] = useState('대시보드');
   const [temperature, setTemperature] = useState(28.5);
   const [humidity, setHumidity] = useState(65);
   const [battery, setBattery] = useState(85);
@@ -303,203 +304,229 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* 상단 상태 카드들 (4개) - 한 줄 */}
-        <div className="status-grid-horizontal">
-          <StatusCard 
-            title="온도" 
-            value="28.5" 
-            unit="°C" 
-            icon={<img src="/assets/icons/temperature.svg" alt="temperature" className="card-icon" />}
-          />
-          <StatusCard 
-            title="습도" 
-            value="65" 
-            unit="%" 
-            icon={<img src="/assets/icons/humidity.svg" alt="humidity" className="card-icon" />}
-            showProgress={true}
-            progressColor="blue"
-          />
-          <StatusCard 
-            title="배터리" 
-            value={battery} 
-            unit="%" 
-            icon={<img src="/assets/icons/battery.svg" alt="battery" className="card-icon" />}
-            showProgress={true}
-            progressColor="blue"
-          />
-          <StatusCard 
-            title="물탱크" 
-            value={waterTank} 
-            unit="%" 
-            icon={<img src="/assets/icons/water-tank-icon.svg" alt="water-tank" className="card-icon" />}
-            showProgress={true}
-            progressColor="purple"
-          />
+
+        {/* 탭 네비게이션 */}
+        <div className="tab-navigation">
+          {['대시보드', '제어', '추적시각화', '스케줄 관리'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`tab-button ${activeTab === tab ? 'active' : ''}`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
-        {/* 하단 정보 카드들 (4개) - 한 줄 */}
-        <div className="info-grid-horizontal">
-          <InfoCard 
-            title="분사 강도" 
-            value={mistLevel} 
-            unit="%" 
-            icon={<img src="/assets/icons/Spray-sensitivity-icon.svg" alt="Spray-sensitivity" className="card-icon" />}
-          />
-          <InfoCard 
-            title="인체 감지" 
-            value={getHumanDetectionStatus()} 
-            unit="" 
-            icon={<img src="/assets/icons/people-icon.svg" alt="people" className="card-icon" />}
-          />
-          <InfoCard 
-            title="거리 방향" 
-            value={distance} 
-            unit={`m ${direction}`} 
-            icon={<img src="/assets/icons/street-direction-icon.svg" alt="street-direction" className="card-icon" />}
-          />
-          <InfoCard 
-            title="안전 상태" 
-            value="안전" 
-            unit="" 
-            icon={<img src="/assets/icons/safe-icon.svg" alt="safe" className="card-icon" />}
-          />
-        </div>
+        {/* 탭별 컨텐츠 */}
+        {activeTab === '대시보드' && (
+          <div className="tab-content">
+            {/* 상단 상태 카드들 */}
+            <div className="status-grid-horizontal">
+              <StatusCard 
+                title="온도" 
+                value="28.5" 
+                unit="°C" 
+                icon={<img src="/assets/icons/temperature.svg" alt="temperature" className="card-icon" />}
+              />
+              <StatusCard 
+                title="습도" 
+                value="65" 
+                unit="%" 
+                icon={<img src="/assets/icons/humidity.svg" alt="humidity" className="card-icon" />}
+                showProgress={true}
+                progressColor="blue"
+              />
+              <StatusCard 
+                title="배터리" 
+                value={battery} 
+                unit="%" 
+                icon={<img src="/assets/icons/battery.svg" alt="battery" className="card-icon" />}
+                showProgress={true}
+                progressColor="blue"
+              />
+              <StatusCard 
+                title="물탱크" 
+                value={waterTank} 
+                unit="%" 
+                icon={<img src="/assets/icons/water-tank-icon.svg" alt="water-tank" className="card-icon" />}
+                showProgress={true}
+                progressColor="purple"
+              />
+            </div>
 
-        {/* 기기 제어와 추적 제어 - 같은 줄 */}
-        <div className="controls-row">
-          {/* 기기 제어 */}
-          <div className="control-section-half">
-            <h3>
-              <img src="/assets/icons/device-control.svg" alt="device-control" className="section-icon" />
-              기기 제어
-            </h3>
-            
-            <div className="control-content-vertical">
-              {/* 시작/일시정지 버튼 */}
-              <button 
-                onClick={() => setIsRunning(!isRunning)}
-                className={`control-button ${isRunning ? 'pause-button' : 'start-button'}`}
-              >
-                {isRunning ? 
-                  <img src="/assets/icons/pause.svg" alt="pause" className="button-icon" /> : 
-                  <img src="/assets/icons/start.svg" alt="start" className="button-icon" />
-                }
-                <span>{isRunning ? '일시정지' : '시작'}</span>
-              </button>
-
-              {/* 분사 강도 조절 */}
-              <div className="slider-container-compact">
-                <div className="slider-header">
-                  <span>분사 강도: {mistLevel}%</span>
-                </div>
-                <div className="slider-wrapper">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={mistLevel}
-                    onChange={(e) => setMistLevel(e.target.value)}
-                    className="slider"
-                    style={{
-                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${mistLevel}%, #e5e7eb ${mistLevel}%, #e5e7eb 100%)`
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* 긴급 정지 버튼 */}
-              <button 
-                className="stop-button-compact"
-                onClick={handleStopClick}
-              >
-                <img src="/assets/icons/stop.svg" alt="stop" className="button-icon" />
-                <span>긴급 정지</span>
-              </button>
+            {/* 하단 정보 카드들 */}
+            <div className="info-grid-horizontal">
+              <InfoCard 
+                title="분사 강도" 
+                value={mistLevel} 
+                unit="%" 
+                icon={<img src="/assets/icons/Spray-sensitivity-icon.svg" alt="Spray-sensitivity" className="card-icon" />}
+              />
+              <InfoCard 
+                title="인체 감지" 
+                value={getHumanDetectionStatus()} 
+                unit="" 
+                icon={<img src="/assets/icons/people-icon.svg" alt="people" className="card-icon" />}
+              />
+              <InfoCard 
+                title="거리 방향" 
+                value={distance} 
+                unit={`m ${direction}`} 
+                icon={<img src="/assets/icons/street-direction-icon.svg" alt="street-direction" className="card-icon" />}
+              />
+              <InfoCard 
+                title="안전 상태" 
+                value="안전" 
+                unit="" 
+                icon={<img src="/assets/icons/safe-icon.svg" alt="safe" className="card-icon" />}
+              />
             </div>
           </div>
+        )}
 
-          {/* 추적 제어 */}
-          <div className="tracking-section-half">
-            <h3>
-              <img src="/assets/icons/tracking-control.svg" alt="tracking-control" className="section-icon" />
-              추적제어
-            </h3>
-            
-            <div className="tracking-content-vertical">
-              <div className="mode-selector-vertical">
-                <span>추적 모드</span>
-                <div className="mode-buttons-full">
-                  {['자동', '수동', '끄기'].map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => setSelectedMode(mode)}
-                      className={`mode-button-full ${
-                        mode === '자동' && selectedMode === mode ? 'active-blue' :
-                        mode === '수동' && selectedMode === mode ? 'active-white' :
-                        mode === '끄기' && selectedMode === mode ? 'active-gray' :
-                        'inactive'
-                      }`}
-                    >
-                      {mode}
-                    </button>
-                  ))}
+        {activeTab === '제어' && (
+          <div className="tab-content">
+            {/* 기기 제어와 추적 제어 - 같은 줄 */}
+            <div className="controls-row">
+              {/* 기기 제어 */}
+              <div className="control-section-half">
+                <h3>
+                  <img src="/assets/icons/device-control.svg" alt="device-control" className="section-icon" />
+                  기기 제어
+                </h3>
+                
+                <div className="control-content-vertical">
+                  {/* 시작/일시정지 버튼 */}
+                  <button 
+                    onClick={() => setIsRunning(!isRunning)}
+                    className={`control-button ${isRunning ? 'pause-button' : 'start-button'}`}
+                  >
+                    {isRunning ? 
+                      <img src="/assets/icons/pause.svg" alt="pause" className="button-icon" /> : 
+                      <img src="/assets/icons/start.svg" alt="start" className="button-icon" />
+                    }
+                    <span>{isRunning ? '일시정지' : '시작'}</span>
+                  </button>
+
+                  {/* 분사 강도 조절 */}
+                  <div className="slider-container-compact">
+                    <div className="slider-header">
+                      <span>분사 강도: {mistLevel}%</span>
+                    </div>
+                    <div className="slider-wrapper">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={mistLevel}
+                        onChange={(e) => setMistLevel(e.target.value)}
+                        className="slider"
+                        style={{
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${mistLevel}%, #e5e7eb ${mistLevel}%, #e5e7eb 100%)`
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 긴급 정지 버튼 */}
+                  <button 
+                    className="stop-button-compact"
+                    onClick={handleStopClick}
+                  >
+                    <img src="/assets/icons/stop.svg" alt="stop" className="button-icon" />
+                    <span>긴급 정지</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="tracking-status">
-                <p className="tracking-status-title">추적 상태</p>
-                <p className="tracking-status-content">
-                  현재 모드: {selectedMode}<br />
-                  안전거리: 1.0m 이상 유지
-                </p>
+              {/* 추적 제어 */}
+              <div className="tracking-section-half">
+                <h3>
+                  <img src="/assets/icons/tracking-control.svg" alt="tracking-control" className="section-icon" />
+                  추적제어
+                </h3>
+                
+                <div className="tracking-content-vertical">
+                  <div className="mode-selector-vertical">
+                    <span>추적 모드</span>
+                    <div className="mode-buttons-full">
+                      {['자동', '수동', '끄기'].map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => setSelectedMode(mode)}
+                          className={`mode-button-full ${
+                            mode === '자동' && selectedMode === mode ? 'active-blue' :
+                            mode === '수동' && selectedMode === mode ? 'active-white' :
+                            mode === '끄기' && selectedMode === mode ? 'active-gray' :
+                            'inactive'
+                          }`}
+                        >
+                          {mode}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="tracking-status">
+                    <p className="tracking-status-title">추적 상태</p>
+                    <p className="tracking-status-content">
+                      현재 모드: {selectedMode}<br />
+                      안전거리: 1.0m 이상 유지
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* 추적 시각화 - 한 줄 */}
-        <div className="visualization-section">
-          <h3>
-            <img src="/assets/icons/tracking-visualization.svg" alt="tracking-visualization" className="section-icon" />
-            추적 시각화
-          </h3>
-          <div className="visualization-content">
-            <div className="radar-container">
-              <h4>레이더뷰</h4>
-              <div className="radar-chart">
-                <div className="radar-circles">
-                  <div className="radar-circle outer"></div>
-                  <div className="radar-circle middle"></div>
-                  <div className="radar-circle inner"></div>
-                  <div className="radar-center"></div>
-                  <div className="radar-target"></div>
+        {activeTab === '추적시각화' && (
+          <div className="tab-content">
+            {/* 레이더뷰 섹션 */}
+            <div className="visualization-section">
+              <h3>
+                <img src="/assets/icons/tracking-visualization.svg" alt="tracking-visualization" className="section-icon" />
+                레이더뷰
+              </h3>
+              <div className="radar-container-center">
+                <div className="radar-chart">
+                  <div className="radar-grid">
+                    <div className="grid-line vertical-1"></div>
+                    <div className="grid-line vertical-2"></div>
+                    <div className="grid-line horizontal-1"></div>
+                    <div className="grid-line horizontal-2"></div>
+                    
+                    <div className="radar-device"></div>
+                    <div className="radar-target"></div>
+                  </div>
+                  <div className="radar-directions">
+                    <div className="direction north">N</div>
+                    <div className="direction east">E</div>
+                    <div className="direction south">S</div>
+                    <div className="direction west">W</div>
+                  </div>
                 </div>
-                <div className="radar-directions">
-                  <div className="direction north">N</div>
-                  <div className="direction east">E</div>
-                  <div className="direction south">S</div>
-                  <div className="direction west">W</div>
-                </div>
-              </div>
-              <div className="radar-legend">
-                <div className="legend-item">
-                  <div className="legend-dot blue"></div>
-                  <span>쿨링포그 장치</span>
-                </div>
-                <div className="legend-item">
-                  <div className="legend-dot green"></div>
-                  <span>추적대상</span>
-                </div>
-                <div className="legend-item">
-                  <div className="legend-dot red"></div>
-                  <span>안전구역</span>
+                <div className="radar-legend">
+                  <div className="legend-item">
+                    <div className="legend-dot device"></div>
+                    <span>쿨링포그 장치</span>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-dot green"></div>
+                    <span>추적대상</span>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="tracking-info">
-              <h4>추적 정보</h4>
-              <div className="tracking-sections">
+
+            {/* 추적 정보 섹션 */}
+            <div className="tracking-info-section">
+              <h3>
+                <img src="/assets/icons/tracking-visualization.svg" alt="tracking-visualization" className="section-icon" />
+                추적 정보
+              </h3>
+              <div className="tracking-sections-grid">
                 
                 {/* 인체 감지 섹션 */}
                 <div className="tracking-section-box">
@@ -545,55 +572,61 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* 스케줄 관리 */}
-        <div className="schedule-section">
-          <div className="schedule-header">
-            <h3>
-              <img src="/assets/icons/schedule-management.svg" alt="schedule-management" className="section-icon" />
-              스케줄 관리
-            </h3>
-            <button className="add-schedule-button" onClick={openNewScheduleModal}>+ 새 스케줄</button>
-          </div>
-          
-          <div className="schedule-list">
-            {schedules.map((schedule) => (
-              <div key={schedule.id} className="schedule-item">
-                <div className="schedule-title">
-                  <span>{schedule.title}</span>
-                  <span className={`schedule-status ${schedule.isActive ? 'active' : 'inactive'}`}>
-                    {schedule.isActive ? '활성' : '비활성'}
-                  </span>
-                </div>
-                <div className="schedule-details">
-                  <span>
-                    <img src="/assets/icons/time.svg" alt="time" className="inline-icon" />
-                    {schedule.time}
-                  </span>
-                  <span>강도: {schedule.intensity}</span>
-                  <span>모드: {schedule.mode}</span>
-                </div>
-                <div className="schedule-repeat">반복: {schedule.repeat}</div>
-                <div className="schedule-actions">
-                  <button onClick={() => toggleScheduleStatus(schedule.id)}>
-                    <img 
-                      src="/assets/icons/power.svg" 
-                      alt="power" 
-                      className={`action-icon ${schedule.isActive ? 'power-active' : 'power-inactive'}`} 
-                    />
-                  </button>
-                  <button onClick={() => openEditScheduleModal(schedule)}>
-                    <img src="/assets/icons/edit.svg" alt="edit" className="action-icon" />
-                  </button>
-                  <button onClick={() => handleDeleteSchedule(schedule.id)}>
-                    <img src="/assets/icons/delete.svg" alt="delete" className="action-icon" />
-                  </button>
-                </div>
+        {activeTab === '스케줄 관리' && (
+          <div className="tab-content">
+            {/* 스케줄 관리 */}
+            <div className="schedule-section">
+              <div className="schedule-header">
+                <h3>
+                  <img src="/assets/icons/schedule-management.svg" alt="schedule-management" className="section-icon" />
+                  스케줄 관리
+                </h3>
+                <button className="add-schedule-button" onClick={openNewScheduleModal}>+ 새 스케줄</button>
               </div>
-            ))}
+              
+              <div className="schedule-list">
+                {schedules.map((schedule) => (
+                  <div key={schedule.id} className="schedule-item">
+                    <div className="schedule-title">
+                      <span>{schedule.title}</span>
+                      <span className={`schedule-status ${schedule.isActive ? 'active' : 'inactive'}`}>
+                        {schedule.isActive ? '활성' : '비활성'}
+                      </span>
+                    </div>
+                    <div className="schedule-details">
+                      <span>
+                        <img src="/assets/icons/time.svg" alt="time" className="inline-icon" />
+                        {schedule.time}
+                      </span>
+                      <span>강도: {schedule.intensity}</span>
+                      <span>모드: {schedule.mode}</span>
+                    </div>
+                    <div className="schedule-repeat">반복: {schedule.repeat}</div>
+                    <div className="schedule-actions">
+                      <button onClick={() => toggleScheduleStatus(schedule.id)}>
+                        <img 
+                          src="/assets/icons/power.svg" 
+                          alt="power" 
+                          className={`action-icon ${schedule.isActive ? 'power-active' : 'power-inactive'}`} 
+                        />
+                      </button>
+                      <button onClick={() => openEditScheduleModal(schedule)}>
+                        <img src="/assets/icons/edit.svg" alt="edit" className="action-icon" />
+                      </button>
+                      <button onClick={() => handleDeleteSchedule(schedule.id)}>
+                        <img src="/assets/icons/delete.svg" alt="delete" className="action-icon" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+
 
         {/* 하단 정보 */}
         <div className="footer-section">
