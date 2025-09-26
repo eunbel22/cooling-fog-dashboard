@@ -1352,3 +1352,372 @@
     gap: 0.25rem;
   }
 }
+
+/* 안전 상태 스타일 */
+.status-danger {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* 모드 상태 바 */
+.mode-status-bar {
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #3b82f6;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mode-status-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.mode-status-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.mode-status-value.자동 {
+  color: #3b82f6;
+}
+
+.mode-status-value.수동 {
+  color: #f59e0b;
+}
+
+.mode-status-value.끄기 {
+  color: #6b7280;
+}
+
+/* 격자 오버레이 스타일 */
+.grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none; /* 기본적으로 클릭 차단 */
+}
+
+.grid-cell {
+  position: absolute;
+  border: 2px dashed #3b82f6 !important;
+  cursor: pointer;
+  background: rgba(59, 130, 246, 0.05);
+  transition: all 0.2s ease;
+  pointer-events: auto; /* 격자 셀만 클릭 가능 */
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.grid-cell:hover {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: #2563eb !important;
+  transform: scale(1.02);
+}
+
+.grid-cell.selected {
+  background: rgba(59, 130, 246, 0.25) !important;
+  border-color: #1d4ed8 !important;
+  border-style: solid !important;
+  border-width: 3px !important;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+/* 쿨링포그 장치 정확한 위치 */
+.radar-device {
+  position: absolute !important;
+  width: 1.2rem;
+  height: 1.2rem;
+  background: #5259c4;
+  border-radius: 0.3rem;
+  z-index: 10; /* 격자 위에 표시 */
+  border: 3px solid white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.8s ease;
+  /* 정확한 중앙 정렬을 위한 추가 스타일 */
+  transform-origin: center center;
+}
+
+/* 수동 모드 알림 표시 */
+.manual-mode-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  background: #ef4444;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.6rem;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 목표 마커 개선 */
+.target-marker {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 레이더 차트 크기 최적화 */
+.radar-chart {
+  width: 20rem;  /* 클릭 정확도를 위해 크기 증가 */
+  height: 20rem;
+  position: relative;
+  margin: 0 auto 1rem auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible; /* 오버플로우 허용으로 정확한 위치 표시 */
+}
+
+.radar-grid {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border: 3px solid #d1d5db;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 범례 추가 색상 */
+.legend-dot.orange {
+  background: #f59e0b;
+}
+
+.legend-dot.blue {
+  background: #3b82f6;
+}
+
+
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .radar-chart {
+    width: 16rem;
+    height: 16rem;
+  }
+  
+  .grid-cell {
+    font-size: 0.625rem;
+  }
+  
+  .mode-status-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+/* Dashboard.css에 추가할 온도 오버레이 관련 스타일 */
+
+/* 온도 오버레이 */
+.temperature-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none; /* 클릭 방지 */
+}
+
+/* 온도 표시 박스 */
+.temp-display {
+  box-sizing: border-box;
+  backdrop-filter: blur(2px);
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.temp-display.measuring {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+  border-color: #f59e0b !important;
+  border-width: 3px !important;
+  animation: measuring-pulse 2s infinite;
+}
+
+@keyframes measuring-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* 온도 값 스타일 */
+.grid-name {
+  font-size: 0.6rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.9;
+}
+
+.temp-value {
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.temp-placeholder {
+  font-size: 0.6rem;
+  opacity: 0.8;
+}
+
+.measuring-indicator {
+  font-size: 1rem;
+  margin-top: 0.2rem;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* 순찰 모드 표시 */
+.patrol-mode-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  background: #f59e0b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 온도 통계 섹션 */
+.temperature-stats {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+}
+
+.temperature-stats h4 {
+  color: #1f2937;
+  font-weight: bold;
+  font-size: 1.125rem;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+}
+
+.temperature-stats h4::before {
+  content: "🌡️";
+  margin-right: 0.5rem;
+}
+
+/* 통계 그리드 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+/* 온도 범례 */
+.temp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.temp-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+.temp-color {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 온도 값 스타일 (추적 정보 섹션용) */
+.temperature-value {
+  font-weight: bold;
+  font-size: 0.875rem;
+  color: #1f2937;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .temp-display {
+    font-size: 0.6rem;
+  }
+  
+  .grid-name {
+    font-size: 0.5rem;
+  }
+  
+  .temp-value {
+    font-size: 0.7rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .temp-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
