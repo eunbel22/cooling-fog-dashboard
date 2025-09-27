@@ -61,11 +61,21 @@
   border: 1px solid rgba(229, 231, 235, 0.3);
 }
 
-.control-section-half h3, .tracking-section-half h3 {
+.control-section-half h3{
   color: #1f2937;
   font-weight: bold;
   font-size: 1.125rem;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 3.5rem 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+.tracking-section-half h3 {
+color: #1f2937;
+  font-weight: bold;
+  font-size: 1.125rem;
+  margin: 0 0 3.5rem 0;
   text-align: left;
   display: flex;
   align-items: center;
@@ -74,7 +84,7 @@
 .control-content-vertical, .tracking-content-vertical {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2.5rem;
 }
 
 .mode-selector-vertical {
@@ -99,8 +109,8 @@
 
 .mode-button-full {
   flex: 1;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
+  padding: 3rem 1rem;
+  font-size: 2rem;
   font-weight: 500;
   border: none;
   cursor: pointer;
@@ -175,7 +185,7 @@
 /* 버튼 스타일 수정 - 아이콘과 텍스트 정렬 */
 .start-button-compact, .stop-button-compact, .control-button {
   width: 100%;
-  padding: 0.75rem;
+  padding: 1.25rem;
   font-weight: 600;
   border-radius: 0.5rem;
   border: none;
@@ -184,9 +194,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 1.2rem;
   transition: all 0.2s ease;
-  min-height: 48px;
+  min-height: 64px;
 }
 
 .start-button-compact, .start-button {
@@ -553,7 +563,9 @@
 /* 시각화 섹션 */
 .visualization-content {
   display: flex;
-  gap: 2rem;
+  flex-direction: row;   /* 가로 배치 */
+  gap: 2rem;             /* 레이더뷰와 카메라 사이 간격 */
+  align-items: flex-start; /* 위쪽 정렬 */
 }
 
 .radar-container {
@@ -761,6 +773,7 @@
   font-weight: 800;
 }
 
+/* 레이더 범례 가운데 정렬 */
 .radar-legend {
   display: flex;
   flex-direction: row;
@@ -768,6 +781,7 @@
   font-size: 1rem;
   font-weight: 800;
   align-items: center;
+  justify-content: center; /* 가운데 정렬 추가 */
   text-align: center;
   margin-top: 1rem;
 }
@@ -1675,19 +1689,22 @@
   color: #1f2937;
 }
 
-/* 온도 범례 */
+/* 온도 범례 여백 증가 */
 .temp-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: center;
+  margin-top: 2rem; /* 위쪽 여백 증가 */
+  padding-top: 1.5rem; /* 추가 패딩 */
+  border-top: 2px solid #e5e7eb; /* 구분선 추가 */
 }
 
 .temp-legend .legend-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.875rem; /* 폰트 크기 조정 */
   color: #374151;
 }
 
@@ -2247,4 +2264,983 @@
     font-size: 0.5rem;
     padding: 0.125rem 0.25rem;
   }
+}
+
+
+
+
+/* 대시보드 탭 - 3열 2행 그리드 */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* 3열 */
+  grid-template-rows: repeat(2, 1fr); /* 2행 */
+  gap: 1rem;
+  margin-bottom: 2rem;
+  min-height: 450px; /* 전체 높이 조정 */
+}
+
+/* 대시보드 카드 기본 스타일 - 모든 카드 가로 레이아웃 */
+.dashboard-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+  display: flex;
+  flex-direction: row; /* 가로 배치 */
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  min-height: 140px;
+  position: relative;
+  transition: all 0.2s ease;
+  gap: 1rem;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 온도 카드 - 1열 1-2행 차지, 큰 아이콘 */
+.temperature-card {
+  grid-column: 1;
+  grid-row: 1 / 3; /* 1행부터 3행까지 (2행 높이) */
+  min-height: 300px;
+}
+
+.temperature-card .card-icon-large {
+  width: 10rem; /* 온도 카드 아이콘 크기 증가 */
+  height: 12rem;
+}
+
+/* 인체 감지 카드 - 2열 1행 */
+.detection-card {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* 거리 방향 카드 - 2열 2행 */
+.distance-card {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* 습도 카드 - 3열 1행 */
+.humidity-card {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* 물탱크 카드 - 3열 2행 */
+.water-card {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+/* 대시보드 탭 전체 위험 상태 */
+.tab-content.dashboard-danger {
+  background: #fee2e2;
+  border-radius: 1rem;
+  padding: 1rem;
+  border: 2px solid #fca5a5;
+}
+
+/* 위험 상태일 때 안전 경고 메시지 */
+.safety-alert {
+  background: #dc2626;
+  color: white;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.safety-alert strong {
+  font-weight: 800;
+}
+
+/* 카드 콘텐츠 - 왼쪽 영역 */
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
+
+/* 카드 아이콘 - 오른쪽 영역 */
+.card-icon-large {
+  width: 7rem;
+  height: 7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  order: 2; /* 아이콘을 오른쪽으로 */
+}
+
+.card-icon-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 카드 라벨 */
+.card-label {
+  font-size: 1.5rem;
+  color: #6b7280;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+/* 메인 값 표시 */
+.card-value-large {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.main-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  line-height: 1;
+}
+
+.value-unit {
+  font-size: 1.75rem;
+  color: #9ca3af;
+  margin-left: 0.25rem;
+  font-weight: 500;
+}
+
+/* 상태 텍스트 */
+.card-status {
+  margin-bottom: 0.5rem;
+}
+
+.status-text {
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* 진행률 바 컨테이너 */
+.progress-bar-container {
+  width: 100%;
+  height: 0.5rem;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+/* 진행률 바 채움 */
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-bar-fill.humidity {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.progress-bar-fill.water {
+  background: linear-gradient(90deg, #06b6d4, #0891b2);
+}
+
+/*.detection-indicator {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}*/
+
+/*.detection-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.detection-dot.active {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.detection-dot.inactive {
+  background: #d1d5db;
+}*/
+
+/* 거리 정보 스타일 */
+.distance-info {
+  display: flex;
+  flex-direction: row; /* 가로 배치로 변경 */
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.distance-value-large {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.direction-value-large {
+  font-size: 1rem;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+/* 카드별 특별 스타일 - 모든 카드 흰색 배경 */
+.temperature-card,
+.humidity-card,
+.water-card,
+.detection-card,
+.distance-card {
+  background: white;
+}
+
+.temperature-card .main-value,
+.humidity-card .main-value,
+.water-card .main-value,
+.detection-card .main-value,
+.distance-card .distance-value-large {
+  color: #1f2937;
+}
+
+.detection-card .status-text.status-good {
+  color: #065f46;
+}
+
+.detection-card .status-text.status-normal {
+  color: #6b7280;
+}
+
+.distance-card .direction-value-large {
+  color: #6366f1;
+}
+
+
+
+
+/* 시각화 섹션 2열 레이아웃 */
+.visualization-content {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.radar-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.camera-container {
+  flex: 0 0 400px; /* 원하는 높이 지정 (세로 크기) */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 기본 섹션 스타일 통일 */
+.radar-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 495px;
+}
+
+.camera-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.radar-section h4, .camera-section h4 {
+  color: #374151;
+  font-weight: 800;
+  margin: 0;
+  text-align: left;
+  font-size: 1.125rem;
+}
+
+/* 피드 영역 스타일 통일 */
+.radar-feed, .camera-feed {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.radar-feed {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px solid #d1d5db;
+  min-height: 350px;
+}
+
+.camera-feed {
+  background: #111827;
+  min-height: 350px;
+}
+
+
+
+/* 정보 영역 스타일 통일 */
+.radar-info, .camera-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+/* 카메라 플레이스홀더 */
+.camera-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7280;
+  height: 100%;
+  gap: 0.5rem;
+}
+
+.camera-placeholder div:first-child {
+  font-size: 3rem;
+}
+
+.camera-placeholder div:nth-child(2) {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.camera-placeholder div:nth-child(3) {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* 카메라 상태 표시 */
+.camera-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.camera-status:last-child {
+  border-bottom: none;
+}
+
+.camera-status span:first-child {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.camera-status span:last-child {
+  font-weight: 600;
+}
+
+/* 레이더 차트는 기존 스타일 유지 */
+.radar-chart {
+  width: 20rem;
+  height: 20rem;
+  position: relative;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.radar-grid {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border: 3px solid #d1d5db;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 기존 레이더 관련 스타일들 유지 */
+.grid-line {
+  position: absolute;
+  background: #e2e8f0;
+}
+
+.grid-line.vertical-1 {
+  left: 33.33%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.grid-line.vertical-2 {
+  left: 66.66%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.grid-line.horizontal-1 {
+  top: 33.33%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.grid-line.horizontal-2 {
+  top: 66.66%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.radar-device {
+  position: absolute !important;
+  width: 1.2rem;
+  height: 1.2rem;
+  background: #5259c4;
+  border-radius: 0.3rem;
+  z-index: 10;
+  border: 3px solid white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.8s ease;
+  transform-origin: center center;
+}
+
+.radar-target {
+  position: absolute;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: #10b981;
+  border-radius: 50%;
+  z-index: 2;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.5s ease, opacity 0.3s ease;
+}
+
+.radar-directions {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.direction {
+  position: absolute;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 800;
+}
+
+.direction.north {
+  top: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.direction.east {
+  right: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.direction.south {
+  bottom: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.direction.west {
+  left: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* 레이더 범례 스타일 */
+.radar-legend {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  font-size: 1rem;
+  font-weight: 800;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.legend-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.legend-dot.device {
+  background: #5259c4;
+  border-radius: 0.125rem;
+}
+
+.legend-dot.green {
+  background: #10b981;
+}
+
+.legend-dot.blue {
+  background: #3b82f6;
+}
+
+.legend-dot.orange {
+  background: #f59e0b;
+}
+
+/* 시각화 콘텐츠 레이아웃 */
+.visualization-content {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.visualization-content > .radar-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.visualization-content > .camera-section {
+  flex: 0 0 400px;
+}
+
+/* 기존 컨테이너 클래스들 제거 또는 통합 */
+.radar-container, .camera-container {
+  /* 기존 컨테이너 스타일은 섹션으로 통합되었으므로 불필요 */
+}
+
+/* 자동 분사 표시 */
+.auto-spray-indicator {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  font-size: 0.8rem;
+  animation: spray-pulse 1s infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes spray-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .visualization-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .visualization-content > .camera-section {
+    flex: none;
+    width: 100%;
+  }
+  
+  .radar-chart {
+    width: 16rem;
+    height: 16rem;
+  }
+  
+  .camera-feed, .radar-feed {
+    min-height: 280px;
+  }
+}
+
+
+.camera-placeholder {
+  text-align: center;
+  color: #6b7280;
+}
+
+.camera-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.camera-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* 스케줄 관리 2열 레이아웃 */
+.schedule-management-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* 좌측 사이드바 */
+.schedule-sidebar {
+  flex: 0 0 250px; /* 고정 너비 */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.schedule-main-title {
+  color: #1f2937;
+  font-weight: bold;
+  font-size: 1.5rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.add-schedule-button-sidebar {
+  background: #5259c4;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(82, 89, 196, 0.2);
+  width: 100%;
+}
+
+.add-schedule-button-sidebar:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(82, 89, 196, 0.3);
+}
+
+/* 우측 스케줄 목록 */
+.schedule-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-content-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.schedule-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
+}
+
+/* 스케줄 아이템 레이아웃 개선 */
+.schedule-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.schedule-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.schedule-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.schedule-title-with-status {
+  display: flex;
+  align-items: baseline; /* 베이스라인 정렬로 완벽한 수평 */
+  gap: 0.75rem; /* 제목과 상태 라벨 사이에 적당한 간격 */
+  margin-bottom: 0rem;
+}
+
+.schedule-title-text {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.2;
+}
+
+/* 기존 schedule-status 스타일 오버라이드 */
+.schedule-item .schedule-status {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  line-height: 1.2;
+  vertical-align: baseline;
+}
+
+.schedule-item .schedule-status.active {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.schedule-item .schedule-status.inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.schedule-title-text {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.schedule-time-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.schedule-repeat-row {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+}
+
+.schedule-details-inline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0rem;
+}
+
+.schedule-repeat-inline {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.schedule-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.schedule-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.schedule-actions button:hover {
+  background: #f3f4f6;
+  transform: scale(1.1);
+}
+
+/* 스케줄 상태 자동화 섹션 */
+.schedule-status-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+  margin-bottom: 1.5rem;
+}
+
+.schedule-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.schedule-status-title {
+  color: #1f2937;
+  font-weight: bold;
+  font-size: 1.125rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.schedule-automation-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: #d1d5db;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggle-switch.active {
+  background: #10b981;
+}
+
+.toggle-switch-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active .toggle-switch-handle {
+  transform: translateX(24px);
+}
+
+.toggle-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.schedule-status-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.status-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.status-info-icon {
+  width: 1rem;
+  height: 1rem;
+  filter: brightness(0) saturate(100%) invert(13%) sepia(23%) saturate(1085%) hue-rotate(196deg) brightness(94%) contrast(87%);
+}
+
+.status-info-text {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .schedule-management-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .schedule-sidebar {
+    flex: none;
+    width: 100%;
+  }
+  
+  .schedule-time-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .schedule-details-inline {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .schedule-content-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .schedule-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .schedule-status-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.card-container {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
 }
