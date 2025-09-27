@@ -515,7 +515,7 @@ async def generate_sensor_data():
                     "temperature": round(random.uniform(25.0, 32.0), 1),
                     "humidity": random.randint(60, 80),
                     "battery_level": random.randint(80, 100),
-                    "water_tank_level": random.randint(60, 90)
+                    "water_tank_level": random.randint(0, 100)
                 }
             }
             await manager.broadcast_json(data)

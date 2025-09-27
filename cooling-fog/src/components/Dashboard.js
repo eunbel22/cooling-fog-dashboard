@@ -12,7 +12,6 @@ const Dashboard = () => {
   const [humidity, setHumidity] = useState(65);
   const [battery, setBattery] = useState(85);
   const [waterTank, setWaterTank] = useState(70);
-  const [mistLevel, setMistLevel] = useState(40);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedMode, setSelectedMode] = useState('자동');
   const [humanDetected, setHumanDetected] = useState(true); // 인체 감지 상태
@@ -109,19 +108,8 @@ const Dashboard = () => {
           setDirection(data.direction);
           break;
           
-        // 이 부분을 제거하거나 주석 처리하세요
-        // case 'position_data':  
-        //   if (data.device_position) {
-        //     setActualDevicePosition(data.device_position);
-        //   }
-        //   if (data.human_position) {
-        //     setActualHumanPosition(data.human_position);
-        //   }
-        //   break;
-          
         case 'device_status':
           setIsRunning(data.is_running);
-          setMistLevel(data.spray_intensity);
           setSelectedMode(data.tracking_mode);
           break;
           
@@ -285,12 +273,7 @@ const Dashboard = () => {
       time: primarySchedule.currentTime
     });
     
-    // 분사 강도 설정 - 현재 값과 다를 때만 변경
-    const intensityValue = parseInt(primarySchedule.intensity.replace('%', ''));
-    if (intensityValue !== mistLevel) {
-      console.log(`분사 강도 변경: ${mistLevel}% → ${intensityValue}%`);
-      handleSprayIntensityChange(intensityValue); // 기존 함수 사용
-    }
+  
     
     // 추적 모드 설정 - 현재 값과 다를 때만 변경
     if (primarySchedule.mode !== selectedMode) {
@@ -417,7 +400,6 @@ const Dashboard = () => {
       // 기기 상태 업데이트
       const deviceData = deviceResponse.data;
       setIsRunning(deviceData.is_running);
-      setMistLevel(deviceData.spray_intensity);
       setSelectedMode(deviceData.tracking_mode);
       
       // 센서 데이터 업데이트
@@ -463,21 +445,6 @@ const Dashboard = () => {
     }
   };
 
-  // 분사 강도 변경 함수 수정
-  const handleSprayIntensityChange = async (newIntensity) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await deviceAPI.setSprayIntensity(newIntensity);
-      setMistLevel(newIntensity);
-    } catch (err) {
-      setError('분사 강도 설정 중 오류가 발생했습니다.');
-      console.error('Spray intensity error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // 추적 모드 변경 함수 수정
   const handleTrackingModeChange = async (mode) => {
@@ -503,7 +470,6 @@ const Dashboard = () => {
     try {
       await deviceAPI.stop();
       setIsRunning(false);
-      setMistLevel(0);
     } catch (err) {
       setError('긴급 정지 중 오류가 발생했습니다.');
       console.error('Emergency stop error:', err);
@@ -517,11 +483,7 @@ const Dashboard = () => {
 
   // 안전 상태 판단 함수
   const getSafetyStatus = () => {
-    // 배터리나 물탱크가 10% 미만이면 미안전
-    if (battery < 10 || waterTank < 10) {
-      return '미안전';
-    }
-    return '안전';
+    return (waterTank < 10) ? 'unsafe' : 'safe';
   };
 
   // 안전 상태 스타일 함수
@@ -726,9 +688,14 @@ const Dashboard = () => {
                 transition: 'all 0.3s ease'
               }}
             >
-              <div className="grid-name">{grid.name}</div>
+              
               {temp ? (
-                <div className="temp-value">{temp}°C</div>
+                <>
+                  <div className="temp-value">{temp}°C</div>
+                  <div className="temp-status" style={{ fontSize: '0.8rem', marginTop: '2px' }}>
+                    {getTempStatusText(temp)}
+                  </div>
+                </>
               ) : (
                 <div className="temp-placeholder">측정중...</div>
               )}
@@ -738,6 +705,14 @@ const Dashboard = () => {
         })}
       </div>
     );
+  };
+
+  // 온도 상태 텍스트 반환 함수
+  const getTempStatusText = (temperature) => {
+    if (temperature < 24) return '시원';
+    if (temperature < 27) return '적정';
+    if (temperature < 30) return '따뜻';
+    return '더움';
   };
 
   // 온도에 따른 색상 결정 함수
@@ -1316,10 +1291,6 @@ const Dashboard = () => {
                 <span className="status-text">{isConnected ? '실시간 연결' : '연결 끊김'}</span>
               </div>
               <div className="status-item">
-                <img src="/assets/icons/battery-icon.svg" alt="Battery" className="status-icon" />
-                <span className="status-text">{battery}%</span>
-              </div>
-              <div className="status-item">
                 <img src="/assets/icons/water-icon.svg" alt="Water" className="status-icon" />
                 <span className="status-text">{waterTank}%</span>
               </div>
@@ -1330,6 +1301,13 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* 안전상태 경고 알림 */}
+        {getSafetyStatus() === 'unsafe' && (
+          <div className="safety-alert">
+            <strong>⚠️ 주의</strong> 물탱크 부족
+          </div>
+        )}
 
 
         {/* 탭 네비게이션 */}
@@ -1346,69 +1324,103 @@ const Dashboard = () => {
         </div>
 
         {/* 탭별 컨텐츠 */}
-        {activeTab === '대시보드' && (
-          <div className="tab-content">
-            {/* 상단 상태 카드들 */}
-            <div className="status-grid-horizontal">
-              <StatusCard 
-                title="온도" 
-                value={temperature}  // "28.5" → {temperature}로 변경
-                unit="°C" 
-                icon={<img src="/assets/icons/temperature.svg" alt="temperature" className="card-icon" />}
-              />
-              <StatusCard 
-                title="습도" 
-                value={humidity}     // "65" → {humidity}로 변경
-                unit="%" 
-                icon={<img src="/assets/icons/humidity.svg" alt="humidity" className="card-icon" />}
-                showProgress={true}
-                progressColor="blue"
-              />
-              <StatusCard 
-                title="배터리" 
-                value={battery} 
-                unit="%" 
-                icon={<img src="/assets/icons/battery.svg" alt="battery" className="card-icon" />}
-                showProgress={true}
-                progressColor="purple"
-              />
-              <StatusCard 
-                title="물탱크" 
-                value={waterTank} 
-                unit="%" 
-                icon={<img src="/assets/icons/water-tank-icon.svg" alt="water-tank" className="card-icon" />}
-                showProgress={true}
-                progressColor="blue"
-              />
-            </div>
 
-            {/* 하단 정보 카드들 */}
-            <div className="info-grid-horizontal">
-              <InfoCard 
-                title="분사 강도" 
-                value={mistLevel} 
-                unit="%" 
-                icon={<img src="/assets/icons/Spray-sensitivity-icon.svg" alt="Spray-sensitivity" className="card-icon" />}
-              />
-              <InfoCard 
-                title="인체 감지" 
-                value={getHumanDetectionStatus()} 
-                unit="" 
-                icon={<img src={getHumanDetectionIcon()} alt="human-detection" className="card-icon" />}
-                isSmallText={true}  // 작은 텍스트 크기 적용
-              />
-              <InfoCard 
-                title="거리 방향" 
-                value={distance} 
-                unit={`m ${direction}`} 
-                icon={<img src="/assets/icons/street-direction-icon.svg" alt="street-direction" className="card-icon" />}
-              />
-              <InfoCard 
-                title="안전 상태" 
-                value={getSafetyStatus()}  // 기존 "안전" → getSafetyStatus()로 변경
-                unit="" 
-                icon={<img src={getSafetyIcon()} alt="safety" className="card-icon" />}
-              />
+        {/* 개선된 대시보드 탭 */}
+        {activeTab === '대시보드' && (
+          <div className={`tab-content ${waterTank <= 10 ? 'dashboard-danger' : ''}`}>
+          {/* 안전상태 경고 알림 */}
+          {waterTank <= 10 && (
+            <div className="safety-alert">
+              <strong>⚠️ 주의</strong> 물탱크 부족 ({waterTank}%) - 즉시 보충이 필요합니다
+            </div>
+          )}
+            {/* 상태 카드들 - 5개 */}
+            <div className="dashboard-grid">
+              {/* 온도 카드 */}
+              <div className="dashboard-card temperature-card">
+                <div className="card-icon-large">
+                  <img src="/assets/icons/temperature.svg" alt="temperature" />
+                </div>
+                <div className="card-content">
+                  <div className="card-label">온도</div>
+                  <div className="card-value-large">
+                    <span className="main-value">{temperature}</span>
+                    <span className="value-unit">°C</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 습도 카드 */}
+              <div className="dashboard-card humidity-card">
+                <div className="card-icon-large">
+                  <img src="/assets/icons/humidity.svg" alt="humidity" />
+                </div>
+                <div className="card-content">
+                  <div className="card-label">습도</div>
+                  <div className="card-value-large">
+                    <span className="main-value">{humidity}</span>
+                    <span className="value-unit">%</span>
+                  </div>
+                  <div className="progress-bar-container">
+                    <div 
+                      className="progress-bar-fill humidity" 
+                      style={{ width: `${humidity}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 물탱크 카드 */}
+              <div className="dashboard-card water-card">
+                <div className="card-icon-large">
+                  <img src="/assets/icons/water-tank-icon.svg" alt="water-tank" />
+                </div>
+                <div className="card-content">
+                  <div className="card-label">물탱크</div>
+                  <div className="card-value-large">
+                    <span className="main-value">{waterTank}</span>
+                    <span className="value-unit">%</span>
+                  </div>
+                  <div className="progress-bar-container">
+                    <div 
+                      className="progress-bar-fill water" 
+                      style={{ width: `${waterTank}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 인체 감지 카드 */}
+              <div className="dashboard-card detection-card">
+                <div className="card-icon-large">
+                  <img src={getHumanDetectionIcon()} alt="human-detection" />
+                </div>
+                <div className="card-content">
+                  <div className="card-label">인체 감지</div>
+                  <div className="card-status">
+                    <span className={`status-text ${getHumanDetectionStyle()}`}>
+                      {humanDetected ? '감지됨' : '감지 안됨'}
+                    </span>
+                  </div>
+                  <div className="detection-indicator">
+                    <div className={`detection-dot ${humanDetected ? 'active' : 'inactive'}`}></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 거리 방향 카드 */}
+              <div className="dashboard-card distance-card">
+                <div className="card-icon-large">
+                  <img src="/assets/icons/street-direction-icon.svg" alt="direction" />
+                </div>
+                <div className="card-content">
+                  <div className="card-label">거리 방향</div>
+                  <div className="distance-info">
+                    <div className="distance-value-large">{distance}m</div>
+                    <div className="direction-value-large">{direction}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -1422,9 +1434,6 @@ const Dashboard = () => {
                 <button onClick={() => setError(null)}>×</button>
               </div>
             )}
-
-            {/* 수동 제어 경고 표시 */}
-            <ManualControlWarning />
             
             <div className="controls-row">
               {/* 기기 제어 */}
@@ -1454,26 +1463,7 @@ const Dashboard = () => {
                     )}
                   </button>
 
-                  {/* 분사 강도 조절 */}
-                  <div className="slider-container-compact">
-                    <div className="slider-header">
-                      <span>분사 강도: {mistLevel}%</span>
-                    </div>
-                    <div className="slider-wrapper">
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={mistLevel}
-                        onChange={(e) => handleSprayIntensityChange(e.target.value)}
-                        disabled={isLoading}
-                        className="slider"
-                        style={{
-                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${mistLevel}%, #e5e7eb ${mistLevel}%, #e5e7eb 100%)`
-                        }}
-                      />
-                    </div>
-                  </div>
+              
 
                   {/* 긴급 정지 버튼 */}
                   <button 
@@ -1496,7 +1486,6 @@ const Dashboard = () => {
                 
                 <div className="tracking-content-vertical">
                   <div className="mode-selector-vertical">
-                    <span>추적 모드</span>
                     <div className="mode-buttons-full">
                       {['자동', '수동', '끄기'].map((mode) => (
                         <button
@@ -1514,20 +1503,11 @@ const Dashboard = () => {
                         </button>
                       ))}
                     </div>
-                  </div>
-
-                  <div className="tracking-status">
-                    <p className="tracking-status-title">추적 상태</p>
-                    <p className="tracking-status-content">
-                      현재 모드: {selectedMode}<br />
-                      안전거리: 1.5m 이상 유지
-                    </p>
-                  </div>
+                  </div>                  
                 </div>
               </div>
             </div>
-            {/* 스케줄 자동화 상태 */}
-            <ScheduleStatus />
+            
           </div>
         )}
 
@@ -1535,215 +1515,123 @@ const Dashboard = () => {
         
         {activeTab === '추적시각화' && (
           <div className="tab-content">
-            {/* 현재 모드 상태 표시 */}
-            <div className="mode-status-bar">
-              <span className="mode-status-label">현재 모드: </span>
-              <span className={`mode-status-value ${selectedMode}`}>
-                {selectedMode}
-                {selectedMode === '수동' && manualTargetGrid !== null && 
-                  ` (${GRID_POSITIONS[manualTargetGrid].name}구역 목표)`
-                }
-                {selectedMode === '끄기' && 
-                  ` (${GRID_POSITIONS[patrolCurrentGrid].name}구역 측정중)`
-                }
-              </span>
-            </div>
-
-            {/* 레이더뷰 섹션 */}
-            <div className="visualization-section">
-              <h3>
-                <img src="/assets/icons/tracking-visualization.svg" alt="tracking-visualization" className="section-icon" />
-                {selectedMode === '끄기' ? '구역별 온도 측정' : '레이더뷰'}
-              </h3>
-              <div className="radar-container-center">
-                <div className="radar-chart">
-                  <div className="radar-grid">
-                    <div className="grid-line vertical-1"></div>
-                    <div className="grid-line vertical-2"></div>
-                    <div className="grid-line horizontal-1"></div>
-                    <div className="grid-line horizontal-2"></div>
-                    
-                    {/* 격자 오버레이 (수동 모드에서만 표시) */}
-                    <GridOverlay />
-                    
-                    {/* 온도 오버레이 (순찰 모드에서만 표시) */}
-                    <GridTemperatureOverlay />
-                    
-                    {/* 쿨링포그 장치 - 모드별 위치 */}
-                    <div 
-                      className="radar-device"
-                      style={{
-                        position: 'absolute',
-                        width: '1.2rem',
-                        height: '1.2rem',
-                        background: '#5259c4',
-                        borderRadius: '0.3rem',
-                        zIndex: 10,
-                        border: '3px solid white',
-                        boxShadow: '0 3px 6px rgba(0, 0, 0, 0.3)',
-                        transition: 'all 0.8s ease',
-                        ...getDevicePositionByMode(),
-                        transform: getDeviceTransform()
-                      }}
-                    >
-                      {/* 자동 분사 중일 때 시각적 표시 */}
-                      {shouldAutoSpray() && (
-                        <div className="auto-spray-indicator">💨</div>
+            <div className="visualization-content">
+              {/* 좌측: 레이더뷰 */}
+              <div className="radar-section">
+                <h4>{selectedMode === '끄기' ? '구역별 온도 측정' : '레이더뷰'}</h4>
+                
+                <div className="radar-feed">
+                  <div className="radar-chart">
+                    {/* 기존 레이더 차트 내용 */}
+                    <div className="radar-grid">
+                      <div className="grid-line vertical-1"></div>
+                      <div className="grid-line vertical-2"></div>
+                      <div className="grid-line horizontal-1"></div>
+                      <div className="grid-line horizontal-2"></div>
+                      
+                      {/* 격자 오버레이, 온도 오버레이, 장치 등 기존 내용 유지 */}
+                      <GridOverlay />
+                      <GridTemperatureOverlay />
+                      
+                      <div 
+                        className="radar-device"
+                        style={{
+                          position: 'absolute',
+                          width: '1.2rem',
+                          height: '1.2rem',
+                          background: '#5259c4',
+                          borderRadius: '0.3rem',
+                          zIndex: 10,
+                          border: '3px solid white',
+                          boxShadow: '0 3px 6px rgba(0, 0, 0, 0.3)',
+                          transition: 'all 0.8s ease',
+                          ...getDevicePositionByMode(),
+                          transform: getDeviceTransform()
+                        }}
+                      >
+                        {shouldAutoSpray() && (
+                          <div className="auto-spray-indicator">💨</div>
+                        )}
+                      </div>
+                      
+                      {shouldShowTarget() && (
+                        <div 
+                          className="radar-target"
+                          style={{
+                            ...getTargetPosition(direction, distance),
+                            transform: 'translate(-50%, -50%)',
+                            transition: 'all 0.5s ease',
+                            opacity: humanDetected ? 1 : 0
+                          }}
+                        ></div>
                       )}
                     </div>
                     
-                    {/* 추적대상 - 끄기 모드에서는 숨김 */}
+                    <div className="radar-directions">
+                      <div className="direction north">N</div>
+                      <div className="direction east">E</div>
+                      <div className="direction south">S</div>
+                      <div className="direction west">W</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="radar-info">
+                  <div className="radar-legend">
+                    <div className="legend-item">
+                      <div className="legend-dot device"></div>
+                      <span>쿨링포그 장치</span>
+                    </div>
                     {shouldShowTarget() && (
-                      <div 
-                        className="radar-target"
-                        style={{
-                          ...getTargetPosition(direction, distance),
-                          transform: 'translate(-50%, -50%)',
-                          transition: 'all 0.5s ease',
-                          opacity: humanDetected ? 1 : 0 // 인체 미감지시 투명하게
-                        }}
-                      ></div>
+                      <div className="legend-item">
+                        <div className="legend-dot green"></div>
+                        <span>추적대상</span>
+                      </div>
+                    )}
+                    {selectedMode === '수동' && (
+                      <div className="legend-item">
+                        <div className="legend-dot blue"></div>
+                        <span>클릭 가능 구역</span>
+                      </div>
+                    )}
+                    {selectedMode === '끄기' && (
+                      <div className="legend-item">
+                        <div className="legend-dot orange"></div>
+                        <span>측정 구역</span>
+                      </div>
                     )}
                   </div>
-                  <div className="radar-directions">
-                    <div className="direction north">N</div>
-                    <div className="direction east">E</div>
-                    <div className="direction south">S</div>
-                    <div className="direction west">W</div>
-                  </div>
-                </div>
-                  
-                <div className="radar-legend">
-                  <div className="legend-item">
-                    <div className="legend-dot device"></div>
-                    <span>쿨링포그 장치</span>
-                  </div>
-                  {shouldShowTarget() && (
-                    <div className="legend-item">
-                      <div className="legend-dot green"></div>
-                      <span>추적대상</span>
-                    </div>
-                  )}
-                  {selectedMode === '수동' && (
-                    <div className="legend-item">
-                      <div className="legend-dot blue"></div>
-                      <span>클릭 가능 구역</span>
-                    </div>
-                  )}
-                  {selectedMode === '끄기' && (
-                    <div className="legend-item">
-                      <div className="legend-dot orange"></div>
-                      <span>측정 구역</span>
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
 
-  
-
-            {/* 추적 정보 섹션 */}
-            <div className="tracking-info-section">
-              <h3>
-                <img src="/assets/icons/tracking-visualization.svg" alt="tracking-visualization" className="section-icon" />
-                {selectedMode === '끄기' ? '순찰 정보' : '추적 정보'}
-              </h3>
-              <div className="tracking-sections-grid">
-                
-                {/* 현재 측정 온도 (순찰 모드에서만) */}
-                {selectedMode === '끄기' && (
-                  <div className="tracking-section-box">
-                    <div className="tracking-item">
-                      <span>현재 구역 온도</span>
-                      <span className="temperature-value">
-                        {gridTemperatures[patrolCurrentGrid] 
-                          ? `${gridTemperatures[patrolCurrentGrid]}°C` 
-                          : '측정중...'
-                        }
-                      </span>
+              {/* 우측: 카메라 피드 */}
+              <div className="camera-section">
+                <h4>카메라 피드</h4>
+                <div className="camera-feed">
+                  <div className="camera-placeholder">
+                    <div>📹</div>
+                    <div>카메라 연결 대기중</div>
+                    <div style={{fontSize: '0.75rem', marginTop: '0.5rem'}}>
+                      실시간 영상이 여기에 표시됩니다
                     </div>
                   </div>
-                )}
+                </div>
                 
-                {/* 인체 감지 섹션 - 끄기 모드에서는 표시 안함 */}
-                {selectedMode !== '끄기' && (
-                  <div className="tracking-section-box">
-                    <div className="tracking-item">
-                      <span>인체 감지</span>
-                      <div className="tracking-value">
-                        <span className="person-icon">👤</span>
-                        <span className={getHumanDetectionStyle()}>{getHumanDetectionStatus()}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* 거리 섹션 - 끄기 모드에서는 숨김 */}
-                {selectedMode !== '끄기' && humanDetected &&(
-                  <div className="tracking-section-box">
-                    <div className="tracking-item">
-                      <span>거리</span>
-                      <span className="distance-value">{distance}m</span>
-                    </div>
-                    <div className="progress-container">
-                      <div 
-                        className="progress-bar green" 
-                        style={{ 
-                          width: `${Math.min((distance / 1.5) * 100, 100)}%`
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 인체 미감지시 대체 표시 */}
-                {selectedMode !== '끄기' && !humanDetected && (
-                  <div className="tracking-section-box">
-                    <div className="tracking-item">
-                      <span>상태</span>
-                      <span className="no-target-message">추적 대상 없음</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* 방향 섹션 - 조건별 표시 */}
-                <div className="tracking-section-box">
-                  <div className="tracking-item">
-                    <span>
-                      {selectedMode === '끄기' ? '순찰 위치' : 
-                      humanDetected ? '방향' : '장치 위치'}
+                <div className="camera-info">
+                  <div className="camera-status">
+                    <span>연결 상태:</span>
+                    <span style={{color: isConnected ? '#10b981' : '#ef4444'}}>
+                      {isConnected ? '연결됨' : '연결 끊김'}
                     </span>
-                    <span className="direction-value">
-                      {selectedMode === '끄기' 
-                        ? GRID_POSITIONS[patrolCurrentGrid].name 
-                        : humanDetected 
-                          ? direction 
-                          : '중앙 대기'
-                      }
+                  </div>
+                  <div className="camera-status">
+                    <span>인체 감지:</span>
+                    <span style={{color: humanDetected ? '#10b981' : '#6b7280'}}>
+                      {humanDetected ? '감지됨' : '감지 안됨'}
                     </span>
                   </div>
                 </div>
-                
-                {/* 분사상태 섹션 - 인체 감지 상태 반영 */}
-                <div className="tracking-section-box">
-                  <div className="tracking-item">
-                    <span>분사상태</span>
-                    <div className="tracking-value">
-                      <div className={`status-dot ${
-                        isRunning && (selectedMode !== '자동' || humanDetected) ? 'active' : 'inactive'
-                      }`}></div>
-                      <span className={getSprayStatusStyle()}>
-                        {isRunning 
-                          ? (selectedMode === '자동' && !humanDetected ? '대기' : '동작')
-                          : '정지'
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
               </div>
-              <TemperatureStats />
             </div>
           </div>
         )}
@@ -1752,90 +1640,68 @@ const Dashboard = () => {
           <div className="tab-content">
             {/* 스케줄 자동화 상태 */}
             <ScheduleStatus />
-            {/* 스케줄 관리 */}
-            <div className="schedule-section">
-              <div className="schedule-header">
-                <h3>
+            
+            {/* 2열 레이아웃: 좌측 새 스케줄 버튼, 우측 스케줄 목록 */}
+            <div className="schedule-management-layout">
+              {/* 좌측: 스케줄 관리 제목과 새 스케줄 버튼 */}
+              <div className="schedule-sidebar">
+                <h3 className="schedule-main-title">
                   <img src="/assets/icons/schedule-management.svg" alt="schedule-management" className="section-icon" />
                   스케줄 관리
                 </h3>
-                <button className="add-schedule-button" onClick={openNewScheduleModal}>+ 새 스케줄</button>
+                <button className="add-schedule-button-sidebar" onClick={openNewScheduleModal}>
+                  + 새 스케줄
+                </button>
               </div>
-              
-              <div className="schedule-list">
-                {schedules.map((schedule) => (
-                  <div key={schedule.id} className="schedule-item">
-                    <div className="schedule-title">
-                      <span>{schedule.title}</span>
-                      <span className={`schedule-status ${schedule.isActive ? 'active' : 'inactive'}`}>
-                        {schedule.isActive ? '활성' : '비활성'}
-                      </span>
+
+              {/* 우측: 스케줄 목록 */}
+              <div className="schedule-content">
+                <div className="schedule-list">
+                  {schedules.map((schedule) => (
+                    <div key={schedule.id} className="schedule-item">
+                      <div className="schedule-content-row">
+                        {/* 좌측: 제목과 상태 */}
+                        <div className="schedule-left">
+                          <div className="schedule-title-with-status">
+                            <span className="schedule-title-text">{schedule.title}</span>
+                            <span className={`schedule-status ${schedule.isActive ? 'active' : 'inactive'}`}>
+                              {schedule.isActive ? '활성' : '비활성'}
+                            </span>
+                          </div>
+                          <div className="schedule-details-inline">
+                            <img src="/assets/icons/time.svg" alt="time" className="inline-icon" />
+                            <span>{schedule.time}</span>
+                            <span>강도: {schedule.intensity}</span>
+                            <span>모드: {schedule.mode}</span>
+                          </div>
+                          <div className="schedule-repeat-inline">반복: {schedule.repeat}</div>
+                        </div>
+
+                        {/* 우측: 액션 버튼들 */}
+                        <div className="schedule-actions">
+                          <button onClick={() => toggleScheduleStatus(schedule.id)}>
+                            <img 
+                              src="/assets/icons/power.svg" 
+                              alt="power" 
+                              className={`action-icon ${schedule.isActive ? 'power-active' : 'power-inactive'}`} 
+                            />
+                          </button>
+                          <button onClick={() => openEditScheduleModal(schedule)}>
+                            <img src="/assets/icons/edit.svg" alt="edit" className="action-icon" />
+                          </button>
+                          <button onClick={() => handleDeleteSchedule(schedule.id)}>
+                            <img src="/assets/icons/delete.svg" alt="delete" className="action-icon" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="schedule-details">
-                      <span>
-                        <img src="/assets/icons/time.svg" alt="time" className="inline-icon" />
-                        {schedule.time}
-                      </span>
-                      <span>강도: {schedule.intensity}</span>
-                      <span>모드: {schedule.mode}</span>
-                    </div>
-                    <div className="schedule-repeat">반복: {schedule.repeat}</div>
-                    <div className="schedule-actions">
-                      <button onClick={() => toggleScheduleStatus(schedule.id)}>
-                        <img 
-                          src="/assets/icons/power.svg" 
-                          alt="power" 
-                          className={`action-icon ${schedule.isActive ? 'power-active' : 'power-inactive'}`} 
-                        />
-                      </button>
-                      <button onClick={() => openEditScheduleModal(schedule)}>
-                        <img src="/assets/icons/edit.svg" alt="edit" className="action-icon" />
-                      </button>
-                      <button onClick={() => handleDeleteSchedule(schedule.id)}>
-                        <img src="/assets/icons/delete.svg" alt="delete" className="action-icon" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-
-
-        {/* 하단 정보 */}
-        <div className="footer-section">
-          <div className="footer-grid">
-            <div className="footer-column">
-              <h4>고객지원</h4>
-              <div className="footer-content">
-                <p>1234-5678</p>
-                <p>whyisthishappening@coolingfog.com</p>
-                <p>평일 09:00 - 18:00</p>
-              </div>
-            </div>
-            
-            <div className="footer-column">
-              <h4>도움말</h4>
-              <div className="footer-content">
-                <p>사용자 매뉴얼</p>
-                <p>자주 묻는 질문</p>
-                <p>문제 해결 가이드</p>
-                <p>원격지원 요청</p>
-              </div>
-            </div>
-            
-            <div className="footer-column">
-              <h4>정책 및 정보</h4>
-              <div className="footer-content">
-                <p>개인정보처리방침</p>
-                <p>이용약관</p>
-                <p>안전 사용 가이드</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* 스케줄 편집 모달 */}
         {isEditScheduleModalOpen && (
