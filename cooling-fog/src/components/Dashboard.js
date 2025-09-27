@@ -18,14 +18,68 @@ const Dashboard = () => {
   const [humanDetected, setHumanDetected] = useState(true); // 인체 감지 상태
   const [distance, setDistance] = useState(2.3); // 거리
   const [direction, setDirection] = useState('북쪽'); // 방향
-  const [manualTargetGrid, setManualTargetGrid] = useState(null); // 수동 모드 클릭 위치
-  const [patrolCurrentGrid, setPatrolCurrentGrid] = useState(0); // 끄기 모드 순찰 위치
-  const [gridTemperatures, setGridTemperatures] = useState({}); // 구역별 온도 저장
-  const [isPatrolling, setIsPatrolling] = useState(false); // 순찰 상태 여부
+  // 상태에 추가할 변수들
+  //const [actualDevicePosition, setActualDevicePosition] = useState({ bottom: '50%', left: '50%' });
+  //const [actualHumanPosition, setActualHumanPosition] = useState({ top: '50%', left: '50%' });
+  
 
   //웹소켓 연결
   const { lastMessage, isConnected, error: wsError } = useWebSocket('ws://localhost:8050/ws/realtime');
 
+
+  // 스케줄 상태 관리
+  const [schedules, setSchedules] = useState([
+    {
+      id: 1,
+      title: '오후 쿨링 타임',
+      time: '오후 11:00 - 오전 01:00',
+      intensity: '80%',
+      mode: '자동',
+      repeat: '화, 수, 목, 금',
+      isActive: true
+    },
+    {
+      id: 2,
+      title: '저녁 휴식 시간',
+      time: '오전 04:00 - 오전 06:00',
+      intensity: '60%',
+      mode: '수동',
+      repeat: '토, 일',
+      isActive: true
+    }
+  ]);
+
+
+  const [manualTargetGrid, setManualTargetGrid] = useState(null); // 수동 모드 클릭 위치
+  const [patrolCurrentGrid, setPatrolCurrentGrid] = useState(0); // 끄기 모드 순찰 위치
+  const [gridTemperatures, setGridTemperatures] = useState({}); // 구역별 온도 저장
+  const [isPatrolling, setIsPatrolling] = useState(false); // 순찰 상태 여부
+  const [activeSchedules, setActiveSchedules] = useState([]); // 현재 활성 스케줄들
+  const [schedulerEnabled, setSchedulerEnabled] = useState(true); // 스케줄러 활성화 여부
+  const [lastScheduleCheck, setLastScheduleCheck] = useState(null); // 마지막 체크 시간
+
+  // 새 스케줄 모달 상태
+  const [isNewScheduleModalOpen, setIsNewScheduleModalOpen] = useState(false);
+  const [isEditScheduleModalOpen, setIsEditScheduleModalOpen] = useState(false);
+  const [editingScheduleId, setEditingScheduleId] = useState(null);
+  const [newSchedule, setNewSchedule] = useState({
+    title: '',
+    startTime: '',
+    endTime: '',
+    selectedDays: [],
+    mode: '자동',
+    intensity: 70,
+    isEnabled: true
+  });
+  const [editSchedule, setEditSchedule] = useState({
+    title: '',
+    startTime: '',
+    endTime: '',
+    selectedDays: [],
+    mode: '자동',
+    intensity: 70,
+    isEnabled: true
+  });
   
 // useEffect 추가하여 컴포넌트 로드 시 데이터 가져오기
   useEffect(() => {
@@ -36,7 +90,7 @@ const Dashboard = () => {
     }
   }, [activeTab]);
 
-  // 실시간 데이터 처리
+  // 실시간 데이터 처리 useEffect 수정
   useEffect(() => {
     if (lastMessage) {
       const { type, data } = lastMessage;
@@ -54,6 +108,16 @@ const Dashboard = () => {
           setDistance(data.distance);
           setDirection(data.direction);
           break;
+          
+        // 이 부분을 제거하거나 주석 처리하세요
+        // case 'position_data':  
+        //   if (data.device_position) {
+        //     setActualDevicePosition(data.device_position);
+        //   }
+        //   if (data.human_position) {
+        //     setActualHumanPosition(data.human_position);
+        //   }
+        //   break;
           
         case 'device_status':
           setIsRunning(data.is_running);
@@ -100,6 +164,240 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 현재 요일을 숫자로 반환하는 함수 (1: 월, 2: 화, ..., 7: 일)
+  const getCurrentDayNumber = () => {
+    const today = new Date();
+    const day = today.getDay(); // 0: 일요일, 1: 월요일, ...
+    return day === 0 ? 7 : day; // 일요일을 7로 변경
+  };
+
+  // 시간을 분 단위로 변환하는 함수
+  const timeToMinutes = (timeString) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // 현재 시간을 분 단위로 반환
+  const getCurrentMinutes = () => {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  };
+
+  // 활성 스케줄 확인 함수
+  const checkActiveSchedules = () => {
+    if (!schedulerEnabled || !schedules || schedules.length === 0) {
+      return [];
+    }
+    
+    const currentDay = getCurrentDayNumber();
+    const currentMinutes = getCurrentMinutes();
+    const currentTime = new Date().toLocaleTimeString('ko-KR', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+    
+    const newActiveSchedules = [];
+    
+    schedules.forEach(schedule => {
+      if (!schedule.isActive) return;
+      
+      // 요일 확인
+      const dayMap = {'월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 7};
+      const scheduleDays = schedule.repeat.split(', ').map(day => dayMap[day]).filter(Boolean);
+      
+      if (!scheduleDays.includes(currentDay)) return;
+      
+      // 시간 파싱 (12시간제를 24시간제로 변환)
+      const parseTime = (timeStr) => {
+        let [period, time] = timeStr.includes('오전') || timeStr.includes('오후') 
+          ? [timeStr.includes('오후') ? 'PM' : 'AM', timeStr.replace(/오전 |오후 /, '')]
+          : ['24H', timeStr];
+        
+        const [hours, minutes] = time.split(':').map(Number);
+        let adjustedHours = hours;
+        
+        if (period === 'PM' && hours !== 12) adjustedHours += 12;
+        if (period === 'AM' && hours === 12) adjustedHours = 0;
+        
+        return adjustedHours * 60 + minutes;
+      };
+      
+      try {
+        let [startTime, endTime] = schedule.time.split(' - ');
+        const startMinutes = parseTime(startTime);
+        let endMinutes = parseTime(endTime);
+        
+        // 다음날로 넘어가는 스케줄 처리 (예: 23:00 - 01:00)
+        if (endMinutes < startMinutes) {
+          endMinutes += 24 * 60; // 다음날로 연장
+        }
+        
+        // 현재 시간이 스케줄 시간 범위 내인지 확인
+        let isInRange = false;
+        if (endMinutes > 24 * 60) { // 자정을 넘나드는 경우
+          isInRange = (currentMinutes >= startMinutes) || (currentMinutes <= endMinutes - 24 * 60);
+        } else {
+          isInRange = (currentMinutes >= startMinutes && currentMinutes < endMinutes);
+        }
+        
+        if (isInRange) {
+          newActiveSchedules.push({
+            ...schedule,
+            startMinutes,
+            endMinutes: endMinutes > 24 * 60 ? endMinutes - 24 * 60 : endMinutes,
+            currentTime
+          });
+        }
+      } catch (error) {
+        console.error(`스케줄 "${schedule.title}" 시간 파싱 오류:`, error);
+      }
+    });
+    
+    // 상태 업데이트는 변경이 있을 때만
+    setActiveSchedules(prev => {
+      const isSame = JSON.stringify(prev) === JSON.stringify(newActiveSchedules);
+      if (isSame) return prev;
+      return newActiveSchedules;
+    });
+    
+    setLastScheduleCheck(new Date());
+    
+    return newActiveSchedules;
+  };
+
+  // 스케줄에 따른 장치 제어 실행 - 무한 루프 방지
+  const executeScheduleControl = (activeScheduleList) => {
+    if (activeScheduleList.length === 0) {
+      return; // 활성 스케줄이 없으면 아무것도 하지 않음
+    }
+    
+    // 가장 최근에 시작된 스케줄을 우선적으로 적용
+    const primarySchedule = activeScheduleList.reduce((latest, current) => {
+      return current.startMinutes > latest.startMinutes ? current : latest;
+    });
+    
+    console.log(`스케줄 "${primarySchedule.title}" 실행 중:`, {
+      intensity: primarySchedule.intensity,
+      mode: primarySchedule.mode,
+      time: primarySchedule.currentTime
+    });
+    
+    // 분사 강도 설정 - 현재 값과 다를 때만 변경
+    const intensityValue = parseInt(primarySchedule.intensity.replace('%', ''));
+    if (intensityValue !== mistLevel) {
+      console.log(`분사 강도 변경: ${mistLevel}% → ${intensityValue}%`);
+      handleSprayIntensityChange(intensityValue); // 기존 함수 사용
+    }
+    
+    // 추적 모드 설정 - 현재 값과 다를 때만 변경
+    if (primarySchedule.mode !== selectedMode) {
+      console.log(`추적 모드 변경: ${selectedMode} → ${primarySchedule.mode}`);
+      handleTrackingModeChange(primarySchedule.mode); // 기존 함수 사용
+    }
+    
+    // 장치 시작 - 현재 꺼져있을 때만 시작
+    if (!isRunning) {
+      console.log('스케줄에 의한 장치 시작');
+      handleDeviceToggle(); // 기존 함수 사용
+    }
+  };
+
+  // 스케줄 체크 useEffect
+  useEffect(() => {
+    if (!schedulerEnabled || !schedules || schedules.length === 0) return;
+    
+    const checkInterval = setInterval(() => {
+      const activeScheduleList = checkActiveSchedules();
+      executeScheduleControl(activeScheduleList);
+    }, 30000); // 30초마다 체크
+    
+    // 초기 실행
+    const initialActiveSchedules = checkActiveSchedules();
+    executeScheduleControl(initialActiveSchedules);
+    
+    return () => clearInterval(checkInterval);
+  }, [schedules, schedulerEnabled]);
+
+
+  // 스케줄러 상태 표시 컴포넌트
+  const ScheduleStatus = () => {
+    const formatTime = (minutes) => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    };
+    
+    return (
+      <div className="schedule-status">
+        <div className="scheduler-header">
+          <h4>스케줄 자동화</h4>
+          <label className="scheduler-toggle">
+            <input
+              type="checkbox"
+              checked={schedulerEnabled}
+              onChange={(e) => setSchedulerEnabled(e.target.checked)}
+            />
+            <span className="toggle-slider"></span>
+            <span className="toggle-label">
+              {schedulerEnabled ? '활성' : '비활성'}
+            </span>
+          </label>
+        </div>
+        
+        {schedulerEnabled && (
+          <>
+            <div className="current-status">
+              <span className="status-label">마지막 확인:</span>
+              <span className="status-time">
+                {lastScheduleCheck ? lastScheduleCheck.toLocaleTimeString('ko-KR') : '대기중'}
+              </span>
+            </div>
+            
+            {activeSchedules.length > 0 ? (
+              <div className="active-schedule-info">
+                <div className="active-schedule-header">현재 활성 스케줄</div>
+                {activeSchedules.map(schedule => (
+                  <div key={schedule.id} className="active-schedule-item">
+                    <div className="schedule-name">{schedule.title}</div>
+                    <div className="schedule-details-mini">
+                      <span>강도: {schedule.intensity}</span>
+                      <span>모드: {schedule.mode}</span>
+                      <span>시간: {schedule.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="no-active-schedule">현재 활성 스케줄 없음</div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // 수동 제어 경고 표시
+  const ManualControlWarning = () => {
+    if (activeSchedules.length === 0 || !schedulerEnabled) return null;
+    
+    return (
+      <div className="manual-control-warning">
+        <div className="warning-icon">⚠️</div>
+        <div className="warning-text">
+          <strong>스케줄 실행 중</strong><br />
+          수동 조작시 스케줄 설정이 우선 적용될 수 있습니다.
+        </div>
+        <button 
+          className="disable-scheduler-btn"
+          onClick={() => setSchedulerEnabled(false)}
+        >
+          스케줄러 일시 중지
+        </button>
+      </div>
+    );
   };
   
 
@@ -213,50 +511,9 @@ const Dashboard = () => {
       setIsLoading(false);
     }
   };
-  // 스케줄 상태 관리
-  const [schedules, setSchedules] = useState([
-    {
-      id: 1,
-      title: '오후 쿨링 타임',
-      time: '오후 11:00 - 오전 01:00',
-      intensity: '80%',
-      mode: '자동',
-      repeat: '화, 수, 목, 금',
-      isActive: true
-    },
-    {
-      id: 2,
-      title: '저녁 휴식 시간',
-      time: '오전 04:00 - 오전 06:00',
-      intensity: '60%',
-      mode: '수동',
-      repeat: '토, 일',
-      isActive: true
-    }
-  ]);
+  
 
-  // 새 스케줄 모달 상태
-  const [isNewScheduleModalOpen, setIsNewScheduleModalOpen] = useState(false);
-  const [isEditScheduleModalOpen, setIsEditScheduleModalOpen] = useState(false);
-  const [editingScheduleId, setEditingScheduleId] = useState(null);
-  const [newSchedule, setNewSchedule] = useState({
-    title: '',
-    startTime: '',
-    endTime: '',
-    selectedDays: [],
-    mode: '자동',
-    intensity: 70,
-    isEnabled: true
-  });
-  const [editSchedule, setEditSchedule] = useState({
-    title: '',
-    startTime: '',
-    endTime: '',
-    selectedDays: [],
-    mode: '자동',
-    intensity: 70,
-    isEnabled: true
-  });
+  
 
   // 안전 상태 판단 함수
   const getSafetyStatus = () => {
@@ -291,6 +548,14 @@ const Dashboard = () => {
 
   const getSprayStatusStyle = () => {
     return isRunning ? 'status-good' : 'status-normal';
+  };
+
+
+  // 인체 감지 상태에 따른 아이콘 결정 함수 추가
+  const getHumanDetectionIcon = () => {
+    return humanDetected 
+      ? "/assets/icons/people-icon (2).svg"  // 감지됨 아이콘
+      : "/assets/icons/people-no-icon.svg";  // 감지 안됨 아이콘
   };
 
   const getHumanDetectionStatus = () => {
@@ -344,18 +609,21 @@ const Dashboard = () => {
   const getDevicePositionByMode = () => {
     switch (selectedMode) {
       case '자동':
-        // 기존 추적 로직 사용
-        return getDevicePosition(direction, distance);
+        // 인체가 감지될 때만 추적, 감지되지 않으면 중앙 위치
+        if (humanDetected) {
+          return getDevicePosition(direction, distance);
+        } else {
+          return { bottom: '50%', left: '50%', transform: 'translate(-50%, 50%)' };
+        }
         
       case '수동':
         // 클릭한 격자의 정확한 위치로 이동
         if (manualTargetGrid !== null) {
           const targetGrid = GRID_POSITIONS[manualTargetGrid];
           return {
-            // top을 bottom으로 변환 (쿠링포그는 bottom 기준으로 위치)
             bottom: `${100 - parseFloat(targetGrid.position.top)}%`,
             left: targetGrid.position.left,
-            transform: 'translate(-50%, 50%)'  // 중앙 정렬
+            transform: 'translate(-50%, 50%)'
           };
         }
         return { bottom: '50%', left: '50%', transform: 'translate(-50%, 50%)' };
@@ -376,7 +644,7 @@ const Dashboard = () => {
 
   // 추적 대상 표시 여부 함수
   const shouldShowTarget = () => {
-    return selectedMode !== '끄기';
+    return selectedMode !== '끄기' && humanDetected;
   };
 
   // 격자 오버레이 표시 여부 함수
@@ -575,43 +843,47 @@ const Dashboard = () => {
 
   // 방향에 따른 추적대상 위치 계산 함수 수정 - 경계 제한 추가
   const getTargetPosition = (direction, distance) => {
-    const maxDistance = 1.0; // 최대 거리 1m
+    const maxDistance = 1.5; // 1.0m → 1.5m로 변경
     const normalizedDistance = Math.min(distance / maxDistance, 1);
-    const maxMovement = 35; // 35%가 최대 이동거리
-    const actualMovement = normalizedDistance * maxMovement;
+    const gridSize = 70; // 15%부터 85%까지가 실제 1m 범위
+    const actualMovement = normalizedDistance * (gridSize / 2); // 최대 35% 이동
     
     const positions = {
       '북쪽': { 
-        top: `${Math.max(15, 50 - actualMovement)}%`, // 15% 최소값 적용
+        top: `${Math.max(15, 50 - actualMovement)}%`,
         left: '50%' 
       },
       '남쪽': { 
-        top: `${Math.min(85, 50 + actualMovement)}%`, // 85% 최대값 적용
+        top: `${Math.min(85, 50 + actualMovement)}%`,
         left: '50%' 
       },
       '동쪽': { 
         top: '50%', 
-        left: `${Math.min(85, 50 + actualMovement)}%` // 85% 최대값 적용
+        left: `${Math.min(85, 50 + actualMovement)}%`
       },
       '서쪽': { 
         top: '50%', 
-        left: `${Math.max(15, 50 - actualMovement)}%` // 15% 최소값 적용
+        left: `${Math.max(15, 50 - actualMovement)}%`
       },
       '북동쪽': { 
-        top: `${Math.max(15, 50 - actualMovement * 0.7)}%`, 
-        left: `${Math.min(85, 50 + actualMovement * 0.7)}%` 
+        top: `${Math.max(15, 50 - actualMovement * 0.707)}%`,  // cos(45°) ≈ 0.707
+        left: `${Math.min(85, 50 + actualMovement * 0.707)}%` 
       },
       '북서쪽': { 
-        top: `${Math.max(15, 50 - actualMovement * 0.7)}%`, 
-        left: `${Math.max(15, 50 - actualMovement * 0.7)}%` 
+        top: `${Math.max(15, 50 - actualMovement * 0.707)}%`, 
+        left: `${Math.max(15, 50 - actualMovement * 0.707)}%` 
       },
       '남동쪽': { 
-        top: `${Math.min(85, 50 + actualMovement * 0.7)}%`, 
-        left: `${Math.min(85, 50 + actualMovement * 0.7)}%` 
+        top: `${Math.min(85, 50 + actualMovement * 0.707)}%`, 
+        left: `${Math.min(85, 50 + actualMovement * 0.707)}%` 
       },
       '남서쪽': { 
-        top: `${Math.min(85, 50 + actualMovement * 0.7)}%`, 
-        left: `${Math.max(15, 50 - actualMovement * 0.7)}%` 
+        top: `${Math.min(85, 50 + actualMovement * 0.707)}%`, 
+        left: `${Math.max(15, 50 - actualMovement * 0.707)}%` 
+      },
+      '중앙': {
+        top: '50%',
+        left: '50%'
       }
     };
     
@@ -622,47 +894,163 @@ const Dashboard = () => {
   const getDevicePosition = (direction, distance) => {
     const safeDistance = 0.3; // 안전거리 30cm
     const followDistance = Math.max(distance - safeDistance, 0);
-    const maxDistance = 1.0; // 최대 거리 1m
+    const maxDistance = 1.5; // 1.0m → 1.5m로 변경
     const normalizedDistance = Math.min(followDistance / maxDistance, 1);
-    const maxMovement = 25; // 25%가 최대 이동거리
-    const actualMovement = normalizedDistance * maxMovement;
+    // 쿨링포그는 추적대상보다 안전거리만큼 뒤에 위치
+    const gridSize = 70;
+    const actualMovement = normalizedDistance * (gridSize / 2);
     
     const positions = {
       '북쪽': { 
-        bottom: `${Math.max(15, 50 - actualMovement)}%`, // 15% 최소값 적용
+        bottom: `${Math.max(15, 50 - actualMovement * 0.8)}%`, // 추적대상보다 뒤에
         left: '50%' 
       },
       '남쪽': { 
-        bottom: `${Math.min(85, 50 + actualMovement)}%`, // 85% 최대값 적용
+        bottom: `${Math.min(85, 50 + actualMovement * 0.8)}%`,
         left: '50%' 
       },
       '동쪽': { 
         bottom: '50%', 
-        left: `${Math.max(15, 50 - actualMovement)}%` // 장치가 추적대상 반대편에 위치
+        left: `${Math.max(15, 50 - actualMovement * 0.8)}%` // 추적대상 반대편
       },
       '서쪽': { 
         bottom: '50%', 
-        left: `${Math.min(85, 50 + actualMovement)}%` // 장치가 추적대상 반대편에 위치
+        left: `${Math.min(85, 50 + actualMovement * 0.8)}%`
       },
       '북동쪽': { 
-        bottom: `${Math.max(15, 50 - actualMovement * 0.7)}%`, 
-        left: `${Math.max(15, 50 - actualMovement * 0.7)}%` 
+        bottom: `${Math.max(15, 50 - actualMovement * 0.6)}%`, 
+        left: `${Math.max(15, 50 - actualMovement * 0.6)}%` 
       },
       '북서쪽': { 
-        bottom: `${Math.max(15, 50 - actualMovement * 0.7)}%`, 
-        left: `${Math.min(85, 50 + actualMovement * 0.7)}%` 
+        bottom: `${Math.max(15, 50 - actualMovement * 0.6)}%`, 
+        left: `${Math.min(85, 50 + actualMovement * 0.6)}%` 
       },
       '남동쪽': { 
-        bottom: `${Math.min(85, 50 + actualMovement * 0.7)}%`, 
-        left: `${Math.max(15, 50 - actualMovement * 0.7)}%` 
+        bottom: `${Math.min(85, 50 + actualMovement * 0.6)}%`, 
+        left: `${Math.max(15, 50 - actualMovement * 0.6)}%` 
       },
       '남서쪽': { 
-        bottom: `${Math.min(85, 50 + actualMovement * 0.7)}%`, 
-        left: `${Math.min(85, 50 + actualMovement * 0.7)}%` 
+        bottom: `${Math.min(85, 50 + actualMovement * 0.6)}%`, 
+        left: `${Math.min(85, 50 + actualMovement * 0.6)}%` 
+      },
+      '중앙': {
+        bottom: '50%',
+        left: '50%'
       }
     };
     
     return positions[direction] || { bottom: '50%', left: '50%' };
+  };
+
+  // 3. 거리 유효성 검증 함수 추가
+  const validateDistance = (distance, direction) => {
+    // 방향별 최대 가능 거리 계산
+    const maxDistances = {
+      '북쪽': 0.5,      // 중심에서 북쪽 격자 끝까지
+      '남쪽': 0.5,
+      '동쪽': 0.5,
+      '서쪽': 0.5,
+      '북동쪽': 0.707,  // 대각선 (√2/2 ≈ 0.707)
+      '북서쪽': 0.707,
+      '남동쪽': 0.707,
+      '남서쪽': 0.707,
+      '중앙': 0
+    };
+    
+    const maxPossible = maxDistances[direction] || 0.5;
+    return Math.min(distance, maxPossible);
+  };
+
+  // 4. 거리 표시 정확성 개선 - 추적 정보 섹션
+  const getAccurateDistanceDisplay = () => {
+    if (!humanDetected || selectedMode === '끄기') {
+      return { distance: '---', showProgress: false };
+    }
+    
+    // 거리 유효성 검증
+    const validatedDistance = validateDistance(distance, direction);
+    
+    return {
+      distance: validatedDistance,
+      showProgress: true,
+      progressWidth: Math.min((validatedDistance / 1.5) * 100, 100)
+    };
+  };
+
+  // 5. 레이더 차트 범례에 거리 스케일 추가
+  const RadarDistanceScale = () => {
+    return (
+      <div className="radar-distance-scale">
+        <div className="scale-title">거리 스케일</div>
+        <div className="scale-marks">
+          <div className="scale-mark">
+            <div className="mark-line" style={{width: '23%'}}></div>
+            <span>0.5m</span>
+          </div>
+          <div className="scale-mark">
+            <div className="mark-line" style={{width: '47%'}}></div>
+            <span>1.0m</span>
+          </div>
+          <div className="scale-mark">
+            <div className="mark-line" style={{width: '70%'}}></div>
+            <span>1.5m</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 6. 거리 정보 표시 개선
+  const DistanceInfoCard = () => {
+    const distanceInfo = getAccurateDistanceDisplay();
+    
+    if (!distanceInfo.showProgress) {
+      return (
+        <div className="tracking-section-box">
+          <div className="tracking-item">
+            <span>상태</span>
+            <span className="no-target-message">추적 대상 없음</span>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="tracking-section-box">
+        <div className="tracking-item">
+          <span>거리</span>
+          <span className="distance-value">{distanceInfo.distance}m</span>
+        </div>
+        <div className="progress-container">
+          <div 
+            className="progress-bar green" 
+            style={{ 
+              width: `${distanceInfo.progressWidth}%`
+            }}
+          ></div>
+        </div>
+        {/* 거리 정확성 표시 */}
+        <div className="distance-accuracy">
+          <span className="accuracy-label">
+            {distanceInfo.distance < 0.3 ? '⚠️ 너무 가까움' : 
+            distanceInfo.distance < 0.8 ? '✅ 적정 거리' : 
+            '📡 추적 중'}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  
+
+
+  // 쿨링포그 회전도 인체 감지 상태에 따라 조정
+  const getDeviceTransform = () => {
+    if (selectedMode === '자동' && humanDetected) {
+      return `translate(-50%, 50%) rotate(${getDeviceOrientation(direction)}deg)`;
+    } else {
+      return 'translate(-50%, 50%)'; // 인체 미감지시 회전 없음
+    }
   };
 
  
@@ -681,6 +1069,30 @@ const Dashboard = () => {
     };
     
     return rotations[direction] || 0;
+  };
+
+  // 자동 분사 로직 추가 - 인체 감지와 거리에 따른 자동 분사
+  const shouldAutoSpray = () => {
+    if (selectedMode === '자동' && humanDetected && isRunning) {
+      return distance <= 1.5; // 1.5m 이내에 있을 때만 분사
+    }
+    return false;
+  };
+
+  // 추적 정보 섹션에서 거리와 방향은 인체 감지시에만 의미있음
+  const getTrackingInfo = () => {
+    if (!humanDetected && selectedMode !== '끄기') {
+      return {
+        distance: '---',
+        direction: '---',
+        showProgress: false
+      };
+    }
+    return {
+      distance: distance,
+      direction: direction,
+      showProgress: true
+    };
   };
 
 
@@ -868,7 +1280,7 @@ const Dashboard = () => {
   );
 
   // 하단 정보 카드 컴포넌트
-  const InfoCard = ({ title, value, unit, icon }) => (
+  const InfoCard = ({ title, value, unit, icon, isSmallText = false }) => (
     <div className="info-card">
       <div className="info-card-header">
         <span className="info-card-title">{title}</span>
@@ -877,7 +1289,7 @@ const Dashboard = () => {
         </div>
       </div>
       <div className="info-card-value">
-        <span className="value">{value}</span>
+        <span className={isSmallText ? "value-small" : "value"}>{value}</span>
         <span className="unit">{unit}</span>
       </div>
     </div>
@@ -982,7 +1394,8 @@ const Dashboard = () => {
                 title="인체 감지" 
                 value={getHumanDetectionStatus()} 
                 unit="" 
-                icon={<img src="/assets/icons/people-icon.svg" alt="people" className="card-icon" />}
+                icon={<img src={getHumanDetectionIcon()} alt="human-detection" className="card-icon" />}
+                isSmallText={true}  // 작은 텍스트 크기 적용
               />
               <InfoCard 
                 title="거리 방향" 
@@ -1009,6 +1422,9 @@ const Dashboard = () => {
                 <button onClick={() => setError(null)}>×</button>
               </div>
             )}
+
+            {/* 수동 제어 경고 표시 */}
+            <ManualControlWarning />
             
             <div className="controls-row">
               {/* 기기 제어 */}
@@ -1104,12 +1520,14 @@ const Dashboard = () => {
                     <p className="tracking-status-title">추적 상태</p>
                     <p className="tracking-status-content">
                       현재 모드: {selectedMode}<br />
-                      안전거리: 1.0m 이상 유지
+                      안전거리: 1.5m 이상 유지
                     </p>
                   </div>
                 </div>
               </div>
             </div>
+            {/* 스케줄 자동화 상태 */}
+            <ScheduleStatus />
           </div>
         )}
 
@@ -1165,11 +1583,14 @@ const Dashboard = () => {
                         boxShadow: '0 3px 6px rgba(0, 0, 0, 0.3)',
                         transition: 'all 0.8s ease',
                         ...getDevicePositionByMode(),
-                        transform: selectedMode === '자동' 
-                          ? `translate(-50%, 50%) rotate(${getDeviceOrientation(direction)}deg)` 
-                          : 'translate(-50%, 50%)'
+                        transform: getDeviceTransform()
                       }}
-                    ></div>
+                    >
+                      {/* 자동 분사 중일 때 시각적 표시 */}
+                      {shouldAutoSpray() && (
+                        <div className="auto-spray-indicator">💨</div>
+                      )}
+                    </div>
                     
                     {/* 추적대상 - 끄기 모드에서는 숨김 */}
                     {shouldShowTarget() && (
@@ -1178,7 +1599,8 @@ const Dashboard = () => {
                         style={{
                           ...getTargetPosition(direction, distance),
                           transform: 'translate(-50%, -50%)',
-                          transition: 'all 0.5s ease'
+                          transition: 'all 0.5s ease',
+                          opacity: humanDetected ? 1 : 0 // 인체 미감지시 투명하게
                         }}
                       ></div>
                     )}
@@ -1257,7 +1679,7 @@ const Dashboard = () => {
                 )}
                 
                 {/* 거리 섹션 - 끄기 모드에서는 숨김 */}
-                {selectedMode !== '끄기' && (
+                {selectedMode !== '끄기' && humanDetected &&(
                   <div className="tracking-section-box">
                     <div className="tracking-item">
                       <span>거리</span>
@@ -1267,30 +1689,55 @@ const Dashboard = () => {
                       <div 
                         className="progress-bar green" 
                         style={{ 
-                          width: `${Math.min((distance / 1.0) * 100, 100)}%`
+                          width: `${Math.min((distance / 1.5) * 100, 100)}%`
                         }}
                       ></div>
                     </div>
                   </div>
                 )}
+
+                {/* 인체 미감지시 대체 표시 */}
+                {selectedMode !== '끄기' && !humanDetected && (
+                  <div className="tracking-section-box">
+                    <div className="tracking-item">
+                      <span>상태</span>
+                      <span className="no-target-message">추적 대상 없음</span>
+                    </div>
+                  </div>
+                )}
                 
-                {/* 방향/위치 섹션 */}
+                {/* 방향 섹션 - 조건별 표시 */}
                 <div className="tracking-section-box">
                   <div className="tracking-item">
-                    <span>{selectedMode === '끄기' ? '순찰 위치' : '방향'}</span>
+                    <span>
+                      {selectedMode === '끄기' ? '순찰 위치' : 
+                      humanDetected ? '방향' : '장치 위치'}
+                    </span>
                     <span className="direction-value">
-                      {selectedMode === '끄기' ? GRID_POSITIONS[patrolCurrentGrid].name : direction}
+                      {selectedMode === '끄기' 
+                        ? GRID_POSITIONS[patrolCurrentGrid].name 
+                        : humanDetected 
+                          ? direction 
+                          : '중앙 대기'
+                      }
                     </span>
                   </div>
                 </div>
                 
-                {/* 분사상태 섹션 */}
+                {/* 분사상태 섹션 - 인체 감지 상태 반영 */}
                 <div className="tracking-section-box">
                   <div className="tracking-item">
                     <span>분사상태</span>
                     <div className="tracking-value">
-                      <div className={`status-dot ${isRunning ? 'active' : 'inactive'}`}></div>
-                      <span className={getSprayStatusStyle()}>{getSprayStatus()}</span>
+                      <div className={`status-dot ${
+                        isRunning && (selectedMode !== '자동' || humanDetected) ? 'active' : 'inactive'
+                      }`}></div>
+                      <span className={getSprayStatusStyle()}>
+                        {isRunning 
+                          ? (selectedMode === '자동' && !humanDetected ? '대기' : '동작')
+                          : '정지'
+                        }
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1303,6 +1750,8 @@ const Dashboard = () => {
 
         {activeTab === '스케줄 관리' && (
           <div className="tab-content">
+            {/* 스케줄 자동화 상태 */}
+            <ScheduleStatus />
             {/* 스케줄 관리 */}
             <div className="schedule-section">
               <div className="schedule-header">

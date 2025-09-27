@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from app.database import engine, get_db
 from app.models import device, sensor, schedule
 from app.routers import device as device_router, schedule as schedule_router
-from app.websocket_manager import manager, generate_sensor_data, generate_tracking_data
+from app.websocket_manager import (
+    manager, generate_sensor_data, generate_tracking_data, 
+    handle_esp32_data, send_start_device, send_stop_device, 
+    send_spray_intensity, send_tracking_mode, send_manual_position,
+    update_patrol_position  # 새로 추가
+)
 import asyncio
 
 # 모든 데이터베이스 테이블 생성
@@ -86,8 +91,7 @@ def get_latest_tracking_data():
     return {
         "device_id": "cooling-fog-001",
         "human_detected": True,
-        "distance": 2.3,
+        "distance": 1.2,  # 예시 값을 1.5m 범위 내로 조정
         "direction": "북쪽",
-        "spray_active": False,
         "timestamp": "2025-09-13T12:30:00"
     }

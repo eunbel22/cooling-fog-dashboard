@@ -27,7 +27,18 @@ export const deviceAPI = {
   // 추적 모드 설정
   setTrackingMode: (mode) => 
     api.put('/api/device/tracking-mode', null, { params: { mode } }),
+
+  // 수동 위치 설정
+  /*setManualPosition: (gridIndex) => 
+    api.post('/api/device/manual-position', null, { params: { grid_index: gridIndex } }),
+  
+  // 순찰 위치 업데이트  
+  updatePatrolPosition: (patrolIndex) =>
+    api.post('/api/device/patrol-position', null, { params: { patrol_index: patrolIndex } })
+  */
 };
+
+
 
 // 센서 데이터 API
 export const sensorAPI = {
