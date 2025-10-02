@@ -1,0 +1,473 @@
+/* VisualizationTab.css - 추적시각화 탭 전용 스타일 */
+
+/* 시각화 섹션 2열 레이아웃 */
+.visualization-content {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.radar-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.camera-container {
+  flex: 0 0 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 기본 섹션 스타일 통일 */
+.radar-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 495px;
+}
+
+.camera-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.radar-section h4, .camera-section h4 {
+  color: #374151;
+  font-weight: 800;
+  margin: 0;
+  text-align: left;
+  font-size: 1.125rem;
+}
+
+/* 피드 영역 스타일 */
+.radar-feed, .camera-feed {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.radar-feed {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px solid #d1d5db;
+  min-height: 350px;
+}
+
+.camera-feed {
+  background: #111827;
+  min-height: 350px;
+}
+
+/* 레이더 차트 */
+.radar-chart {
+  width: 20rem;
+  height: 20rem;
+  position: relative;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.radar-grid {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border: 3px solid #d1d5db;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 격자선 */
+.grid-line {
+  position: absolute;
+  background: #e2e8f0;
+}
+
+.grid-line.vertical-1 {
+  left: 33.33%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.grid-line.vertical-2 {
+  left: 66.66%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.grid-line.horizontal-1 {
+  top: 33.33%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.grid-line.horizontal-2 {
+  top: 66.66%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+/* 레이더 장치 */
+.radar-device {
+  position: absolute !important;
+  width: 1.2rem;
+  height: 1.2rem;
+  background: #5259c4;
+  border-radius: 0.3rem;
+  z-index: 10;
+  border: 3px solid white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.8s ease;
+  transform-origin: center center;
+}
+
+.radar-target {
+  position: absolute;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: #10b981;
+  border-radius: 50%;
+  z-index: 2;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.5s ease, opacity 0.3s ease;
+}
+
+/* 레이더 방향 표시 */
+.radar-directions {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.direction {
+  position: absolute;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 800;
+}
+
+.direction.north {
+  top: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.direction.east {
+  right: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.direction.south {
+  bottom: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.direction.west {
+  left: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.visualization-content > .radar-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.visualization-content > .camera-section {
+  flex: 0 0 400px;
+}
+
+/* 제거할 부분 2: 레이더 차트 */
+.radar-container h4, .tracking-info h4 {
+  color: #374151;
+  font-weight: 800;
+  margin: 0 0 2rem 0;
+  text-align: left;
+}
+
+/* 레이더 범례 */
+.radar-legend {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  font-size: 1rem;
+  font-weight: 800;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.legend-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.legend-dot.device {
+  background: #5259c4;
+  border-radius: 0.125rem;
+}
+
+.legend-dot.green {
+  background: #10b981;
+}
+
+.legend-dot.blue {
+  background: #3b82f6;
+}
+
+.legend-dot.orange {
+  background: #f59e0b;
+}
+
+/* 격자 오버레이 */
+.grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.grid-cell {
+  position: absolute;
+  border: 2px dashed #3b82f6 !important;
+  cursor: pointer;
+  background: rgba(59, 130, 246, 0.05);
+  transition: all 0.2s ease;
+  pointer-events: auto;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.grid-cell:hover {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: #2563eb !important;
+  transform: scale(1.02);
+}
+
+.grid-cell.selected {
+  background: rgba(59, 130, 246, 0.25) !important;
+  border-color: #1d4ed8 !important;
+  border-style: solid !important;
+  border-width: 3px !important;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+/* 온도 오버레이 */
+.temperature-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.temp-display {
+  box-sizing: border-box;
+  backdrop-filter: blur(2px);
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.temp-display.measuring {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+  border-color: #f59e0b !important;
+  border-width: 3px !important;
+  animation: measuring-pulse 2s infinite;
+}
+
+@keyframes measuring-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.grid-name {
+  font-size: 0.6rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.9;
+}
+
+.temp-value {
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.temp-placeholder {
+  font-size: 0.6rem;
+  opacity: 0.8;
+}
+
+.measuring-indicator {
+  font-size: 1rem;
+  margin-top: 0.2rem;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* 자동 분사 표시 */
+.auto-spray-indicator {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  font-size: 0.8rem;
+  animation: spray-pulse 1s infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes spray-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+/* 카메라 플레이스홀더 */
+.camera-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7280;
+  height: 100%;
+  gap: 0.5rem;
+}
+
+.camera-placeholder div:first-child {
+  font-size: 3rem;
+}
+
+.camera-placeholder div:nth-child(2) {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.camera-placeholder div:nth-child(3) {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* 카메라 상태 표시 */
+.camera-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.camera-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.camera-status:last-child {
+  border-bottom: none;
+}
+
+.camera-status span:first-child {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.camera-status span:last-child {
+  font-weight: 600;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .visualization-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .camera-container {
+    flex: none;
+    width: 100%;
+  }
+  
+  .radar-chart {
+    width: 16rem;
+    height: 16rem;
+  }
+  
+  .camera-feed, .radar-feed {
+    min-height: 280px;
+  }
+  
+  .grid-cell {
+    font-size: 0.625rem;
+  }
+  
+  .temp-display {
+    font-size: 0.6rem;
+  }
+  
+  .grid-name {
+    font-size: 0.5rem;
+  }
+  
+  .temp-value {
+    font-size: 0.7rem;
+  }
+}
+

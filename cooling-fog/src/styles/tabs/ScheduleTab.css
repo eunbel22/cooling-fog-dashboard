@@ -1,0 +1,388 @@
+/* ScheduleTab.css - 스케줄 관리 탭 전용 스타일 */
+
+/* 스케줄 상태 섹션 */
+.schedule-status {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+}
+
+/* 스케줄러 헤더 */
+.scheduler-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.scheduler-header h4 {
+  color: #1f2937;
+  font-weight: bold;
+  font-size: 1.125rem;
+  margin: 0;
+}
+
+.scheduler-header h4::before {
+  content: "⏰";
+  margin-right: 0.5rem;
+}
+
+/* 토글 스위치 */
+.scheduler-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.scheduler-toggle input {
+  display: none;
+}
+
+.toggle-slider {
+  width: 3rem;
+  height: 1.5rem;
+  background: #d1d5db;
+  border-radius: 9999px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.scheduler-toggle input:checked + .toggle-slider {
+  background: #10b981;
+}
+
+.scheduler-toggle input:checked + .toggle-slider::before {
+  transform: translateX(1.5rem);
+}
+
+.toggle-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+/* 현재 상태 */
+.current-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.status-label {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.status-time {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* 활성 스케줄 정보 */
+.active-schedule-info {
+  border: 2px solid #d1fae5;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background: #ecfdf5;
+}
+
+.active-schedule-header {
+  color: #065f46;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.active-schedule-header::before {
+  content: "✅";
+  margin-right: 0.5rem;
+}
+
+.active-schedule-item {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #a7f3d0;
+}
+
+.active-schedule-item:last-child {
+  margin-bottom: 0;
+}
+
+.schedule-name {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.schedule-details-mini {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.schedule-details-mini span {
+  display: flex;
+  align-items: center;
+}
+
+/* 활성 스케줄 없음 */
+.no-active-schedule {
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+/* 스케줄 관리 2열 레이아웃 */
+.schedule-management-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* 좌측 사이드바 */
+.schedule-sidebar {
+  flex: 0 0 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.schedule-main-title {
+  color: #1f2937;
+  font-weight: bold;
+  font-size: 1.5rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.add-schedule-button-sidebar {
+  background: #5259c4;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(82, 89, 196, 0.2);
+  width: 100%;
+}
+
+.add-schedule-button-sidebar:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(82, 89, 196, 0.3);
+}
+
+/* 우측 스케줄 목록 */
+.schedule-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 스케줄 아이템 */
+.schedule-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.schedule-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.schedule-content-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.schedule-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.schedule-title-with-status {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.schedule-title-text {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+
+
+/* 스케줄 상태 섹션 */
+.schedule-status {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+}
+
+
+.schedule-status.inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid #d1d5db;
+}
+
+.schedule-status.active {
+  background: #d1fae5;
+  color: #047857;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid #a7f3d0;
+}
+
+
+.schedule-details-inline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.schedule-repeat-inline {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.schedule-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.schedule-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.schedule-actions button:hover {
+  background: #f3f4f6;
+  transform: scale(1.1);
+}
+
+/* 전원 아이콘 상태별 색상 */
+.action-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  transition: filter 0.2s ease;
+}
+
+.power-active {
+  filter: none;
+}
+
+.power-inactive {
+  filter: grayscale(1) brightness(0.6);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .schedule-management-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .schedule-sidebar {
+    flex: none;
+    width: 100%;
+  }
+  
+  .schedule-content-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .schedule-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .schedule-details-inline {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .schedule-details-mini {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .current-status {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
