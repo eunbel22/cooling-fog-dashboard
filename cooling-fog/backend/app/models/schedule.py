@@ -11,7 +11,7 @@ class Schedule(Base):
     start_time = Column(Time)
     end_time = Column(Time)
     days_of_week = Column(JSON)  # [1,2,3,4,5] for Mon-Fri
-    intensity = Column(Integer)
     mode = Column(String(20))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    

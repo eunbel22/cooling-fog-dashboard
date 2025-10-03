@@ -2,30 +2,15 @@ import { useState, useEffect } from 'react';
 import { scheduleAPI } from '../services/api';
 
 export const useScheduleManager = () => {
-  const [schedules, setSchedules] = useState([
-    {
-      id: 1,
-      title: '오후 쿨링 타임',
-      time: '오후 11:00 - 오전 01:00',
-      intensity: '80%',
-      mode: '자동',
-      repeat: '화, 수, 목, 금',
-      isActive: true
-    },
-    {
-      id: 2,
-      title: '저녁 휴식 시간',
-      time: '오전 04:00 - 오전 06:00',
-      intensity: '60%',
-      mode: '수동',
-      repeat: '토, 일',
-      isActive: true
-    }
-  ]);
-
+  const [schedules, setSchedules] = useState([]);
   const [activeSchedules, setActiveSchedules] = useState([]);
   const [schedulerEnabled, setSchedulerEnabled] = useState(true);
   const [lastScheduleCheck, setLastScheduleCheck] = useState(null);
+
+  // 컴포넌트 마운트 시 스케줄 로드
+  useEffect(() => {
+    loadSchedules();
+  }, []);
 
   // 스케줄 데이터 로드
   const loadSchedules = async () => {
@@ -172,15 +157,33 @@ export const useScheduleManager = () => {
     }
   };
 
-  // 스케줄 활성/비활성 토글
-  const toggleScheduleStatus = (scheduleId) => {
-    setSchedules(prevSchedules => 
-      prevSchedules.map(schedule => 
-        schedule.id === scheduleId 
-          ? { ...schedule, isActive: !schedule.isActive }
-          : schedule
-      )
-    );
+  // 스케줄 활성/비활성 토글 (DB에 저장)
+  const toggleScheduleStatus = async (scheduleId) => {
+    try {
+      // 현재 스케줄 찾기
+      const schedule = schedules.find(s => s.id === scheduleId);
+      if (!schedule) return;
+      
+      // API 호출하여 DB 업데이트
+      await scheduleAPI.update(scheduleId, {
+        is_active: !schedule.isActive
+      });
+      
+      // 로컬 state 업데이트
+      setSchedules(prevSchedules => 
+        prevSchedules.map(s => 
+          s.id === scheduleId 
+            ? { ...s, isActive: !s.isActive }
+            : s
+        )
+      );
+      
+      console.log(`스케줄 "${schedule.title}" 상태 변경: ${!schedule.isActive ? '활성' : '비활성'}`);
+    } catch (err) {
+      console.error('Toggle schedule status error:', err);
+      // 에러 발생 시 다시 로드
+      await loadSchedules();
+    }
   };
 
   // 스케줄 삭제

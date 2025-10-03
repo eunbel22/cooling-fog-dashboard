@@ -48,7 +48,6 @@ const ScheduleTab = ({
                   <div key={schedule.id} className="active-schedule-item">
                     <div className="schedule-name">{schedule.title}</div>
                     <div className="schedule-details-mini">
-                      <span>강도: {schedule.intensity}</span>
                       <span>모드: {schedule.mode}</span>
                       <span>시간: {schedule.time}</span>
                     </div>
@@ -121,7 +120,6 @@ const ScheduleTab = ({
                     <div className="schedule-details-inline">
                       <img src="/assets/icons/time.svg" alt="time" className="inline-icon" />
                       <span>{schedule.time}</span>
-                      <span>강도: {schedule.intensity}</span>
                       <span>모드: {schedule.mode}</span>
                     </div>
                     <div className="schedule-repeat-inline">반복: {schedule.repeat}</div>
