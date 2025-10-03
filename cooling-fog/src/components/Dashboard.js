@@ -17,7 +17,6 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [temperature, setTemperature] = useState(28.5);
   const [humidity, setHumidity] = useState(65);
-  const [battery, setBattery] = useState(85);
   const [waterTank, setWaterTank] = useState(70);
   const [humanDetected, setHumanDetected] = useState(true);
   const [distance, setDistance] = useState(2.3);
@@ -41,7 +40,6 @@ const Dashboard = () => {
     endTime: '',
     selectedDays: [],
     mode: '자동',
-    intensity: 70,
     isEnabled: true
   });
   const [editSchedule, setEditSchedule] = useState({
@@ -50,7 +48,6 @@ const Dashboard = () => {
     endTime: '',
     selectedDays: [],
     mode: '자동',
-    intensity: 70,
     isEnabled: true
   });
 
@@ -72,7 +69,6 @@ const Dashboard = () => {
         case 'sensor_data':
           setTemperature(data.temperature);
           setHumidity(data.humidity);
-          setBattery(data.battery_level);
           setWaterTank(data.water_tank_level);
           break;
           
@@ -137,7 +133,6 @@ const Dashboard = () => {
       
       setTemperature(sensorResponse.data.temperature);
       setHumidity(sensorResponse.data.humidity);
-      setBattery(sensorResponse.data.battery_level);
       setWaterTank(sensorResponse.data.water_tank_level);
       
       setHumanDetected(trackingResponse.data.human_detected);
@@ -167,7 +162,6 @@ const Dashboard = () => {
       endTime: '',
       selectedDays: [],
       mode: '자동',
-      intensity: 70,
       isEnabled: true
     });
   };
@@ -189,7 +183,7 @@ const Dashboard = () => {
       endTime,
       selectedDays,
       mode: schedule.mode,
-      intensity: parseInt(schedule.intensity.replace('%', '')),
+      //intensity: parseInt(schedule.intensity.replace('%', '')),
       isEnabled: schedule.isActive
     });
     setEditingScheduleId(schedule.id);
@@ -240,7 +234,6 @@ const Dashboard = () => {
           const dayMap = {'월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 7};
           return dayMap[day];
         }),
-        intensity: newSchedule.intensity,
         mode: newSchedule.mode,
         is_active: newSchedule.isEnabled
       };
@@ -270,7 +263,7 @@ const Dashboard = () => {
         id: editingScheduleId,
         title: editSchedule.title,
         time: `${formatTime(editSchedule.startTime)} - ${formatTime(editSchedule.endTime)}`,
-        intensity: `${editSchedule.intensity}%`,
+        //intensity: `${editSchedule.intensity}%`,
         mode: editSchedule.mode,
         repeat: editSchedule.selectedDays.join(', '),
         isActive: editSchedule.isEnabled
@@ -461,20 +454,7 @@ const Dashboard = () => {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label>분사 강도: {editSchedule.intensity}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={editSchedule.intensity}
-                  onChange={(e) => setEditSchedule(prev => ({...prev, intensity: parseInt(e.target.value)}))}
-                  className="intensity-slider"
-                  style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${editSchedule.intensity}%, #e5e7eb ${editSchedule.intensity}%, #e5e7eb 100%)`
-                  }}
-                />
-              </div>
+              
 
               <div className="form-group">
                 <label 
@@ -596,21 +576,6 @@ const Dashboard = () => {
                   <option value="수동">수동</option>
                   <option value="끄기">끄기</option>
                 </select>
-              </div>
-
-              <div className="form-group">
-                <label>분사 강도: {newSchedule.intensity}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={newSchedule.intensity}
-                  onChange={(e) => setNewSchedule(prev => ({...prev, intensity: parseInt(e.target.value)}))}
-                  className="intensity-slider"
-                  style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${newSchedule.intensity}%, #e5e7eb ${newSchedule.intensity}%, #e5e7eb 100%)`
-                  }}
-                />
               </div>
 
               <div className="form-group">
