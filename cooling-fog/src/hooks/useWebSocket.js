@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const useWebSocket = (url) => {
   const [socket, setSocket] = useState(null);
@@ -9,7 +9,8 @@ const useWebSocket = (url) => {
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
 
-  const connect = () => {
+  // ✅ useCallback으로 감싸서 의존성 문제 해결
+  const connect = useCallback(() => {
     try {
       const ws = new WebSocket(url);
       
@@ -19,7 +20,7 @@ const useWebSocket = (url) => {
         setError(null);
         reconnectAttempts.current = 0;
         
-        // 연결 유지를 위한 ping 메시지
+        // 연결 유지용 ping 메시지
         const pingInterval = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'ping' }));
@@ -69,7 +70,7 @@ const useWebSocket = (url) => {
       console.error('WebSocket 연결 실패:', err);
       setError('WebSocket 연결에 실패했습니다.');
     }
-  };
+  }, [url]);
 
   useEffect(() => {
     if (url) {
@@ -87,7 +88,7 @@ const useWebSocket = (url) => {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
-  }, [url]);
+  }, [url, connect, socket]); // ✅ 의존성 배열 정리
 
   const sendMessage = (message) => {
     if (socket && socket.readyState === WebSocket.OPEN) {

@@ -58,8 +58,9 @@ const Dashboard = () => {
     } else if (activeTab === '스케줄 관리') {
       scheduleManager.loadSchedules();
     }
-  }, [activeTab]);
+  }, [activeTab, loadDashboardData, scheduleManager]);
 
+  
   // 웹소켓 메시지 처리
   useEffect(() => {
     if (lastMessage) {
@@ -87,7 +88,7 @@ const Dashboard = () => {
           console.log('알 수 없는 메시지 타입:', type);
       }
     }
-  }, [lastMessage]);
+  }, [lastMessage, deviceControl]);
 
   // 스케줄 체크
   useEffect(() => {
@@ -114,7 +115,14 @@ const Dashboard = () => {
     );
     
     return () => clearInterval(checkInterval);
-  }, [scheduleManager.schedules, scheduleManager.schedulerEnabled]);
+  }, [
+    scheduleManager.schedules,
+    scheduleManager.schedulerEnabled,
+    deviceControl.handleTrackingModeChange,
+    deviceControl.handleDeviceToggle,
+    deviceControl.selectedMode,
+    deviceControl.isRunning
+  ]);
 
   // 대시보드 데이터 로드
   const loadDashboardData = async () => {
