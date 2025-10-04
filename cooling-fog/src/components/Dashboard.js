@@ -23,7 +23,7 @@ const Dashboard = () => {
   const [direction, setDirection] = useState('북쪽');
 
   // 웹소켓 연결
-  const { lastMessage, isConnected } = useWebSocket('ws://localhost:8050/ws/realtime');
+  const { lastMessage, isConnected } = useWebSocket('ws://3.36.112.6:8050/ws/realtime');
 
   // 커스텀 훅 사용
   const deviceControl = useDeviceControl(setIsLoading, setError);
