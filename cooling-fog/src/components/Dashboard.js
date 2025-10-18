@@ -58,7 +58,7 @@ const Dashboard = () => {
     } else if (activeTab === '스케줄 관리') {
       scheduleManager.loadSchedules();
     }
-  }, [activeTab, loadDashboardData, scheduleManager]);
+  }, [activeTab]);
 
   
   // 웹소켓 메시지 처리

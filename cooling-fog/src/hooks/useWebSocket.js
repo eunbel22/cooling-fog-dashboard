@@ -1,98 +1,94 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const useWebSocket = (url) => {
   const [socket, setSocket] = useState(null);
   const [lastMessage, setLastMessage] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
+  const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
 
-  // ✅ useCallback으로 감싸서 의존성 문제 해결
-  const connect = useCallback(() => {
-    try {
-      const ws = new WebSocket(url);
-      
-      ws.onopen = () => {
-        console.log('WebSocket 연결됨');
-        setIsConnected(true);
-        setError(null);
-        reconnectAttempts.current = 0;
-        
-        // 연결 유지용 ping 메시지
-        const pingInterval = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'ping' }));
-          }
-        }, 30000);
-        
-        ws.pingInterval = pingInterval;
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          setLastMessage(data);
-        } catch (err) {
-          console.error('메시지 파싱 오류:', err);
-        }
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket 연결 해제됨');
-        setIsConnected(false);
-        
-        if (ws.pingInterval) {
-          clearInterval(ws.pingInterval);
-        }
-        
-        // 자동 재연결
-        if (reconnectAttempts.current < maxReconnectAttempts) {
-          reconnectAttempts.current++;
-          console.log(`재연결 시도 ${reconnectAttempts.current}/${maxReconnectAttempts}`);
-          
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, 2000 * reconnectAttempts.current); // 지수 백오프
-        } else {
-          setError('최대 재연결 시도 횟수에 도달했습니다.');
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket 오류:', error);
-        setError('WebSocket 연결 오류가 발생했습니다.');
-      };
-
-      setSocket(ws);
-    } catch (err) {
-      console.error('WebSocket 연결 실패:', err);
-      setError('WebSocket 연결에 실패했습니다.');
-    }
-  }, [url]);
-
   useEffect(() => {
-    if (url) {
-      connect();
-    }
-
-    return () => {
-      if (socket) {
-        if (socket.pingInterval) {
-          clearInterval(socket.pingInterval);
-        }
-        socket.close();
+    const connect = () => {
+      // 이미 연결 중이거나 연결되어 있으면 중복 방지
+      if (wsRef.current && 
+          (wsRef.current.readyState === WebSocket.CONNECTING || 
+           wsRef.current.readyState === WebSocket.OPEN)) {
+        return;
       }
+
+      try {
+        const ws = new WebSocket(url);
+        wsRef.current = ws;
+        
+        ws.onopen = () => {
+          console.log('WebSocket 연결됨');
+          setIsConnected(true);
+          setError(null);
+          reconnectAttempts.current = 0;
+          setSocket(ws);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            setLastMessage(data);
+          } catch (err) {
+            console.error('메시지 파싱 오류:', err);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket 연결 해제됨');
+          setIsConnected(false);
+          wsRef.current = null;
+          
+          // 재연결 시도
+          if (reconnectAttempts.current < maxReconnectAttempts) {
+            reconnectAttempts.current++;
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+            
+            reconnectTimeoutRef.current = setTimeout(() => {
+              console.log(`재연결 시도 ${reconnectAttempts.current}/${maxReconnectAttempts}`);
+              connect();
+            }, delay);
+          } else {
+            setError('최대 재연결 시도 횟수에 도달했습니다.');
+          }
+        };
+
+        ws.onerror = (err) => {
+          console.error('WebSocket 오류:', err);
+          setError('WebSocket 연결 오류');
+        };
+        
+      } catch (err) {
+        console.error('WebSocket 연결 실패:', err);
+        setError('WebSocket 연결에 실패했습니다.');
+      }
+    };
+
+    connect();
+
+    // cleanup
+    return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [url, connect, socket]); // ✅ 의존성 배열 정리
+  }, [url]);
 
   const sendMessage = (message) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(message));
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(message));
+    } else {
+      console.warn('WebSocket이 연결되지 않았습니다.');
     }
   };
 

@@ -21,12 +21,19 @@ schedule.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="CoolingFog API", version="1.0.0")
 
-# CORS 설정
+# CORS 설정 - EC2 IP 추가
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://3.36.112.6",
+        "http://3.36.112.6:3000",
+        "https://3.36.112.6",
+        "https://3.36.112.6:3000",
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -63,12 +70,22 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.websocket("/ws/esp32")
 async def esp32_websocket(websocket: WebSocket):
-    """ESP32 하드웨어용 WebSocket"""
+    """라즈베리파이/ESP32 하드웨어용 WebSocket"""
     await manager.connect_esp32(websocket)
     try:
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
+            
+            # 하드웨어에서 온 데이터 처리
+            if message.get("type") == "sensor_data":
+                # 센서 데이터를 모든 웹 클라이언트에게 브로드캐스트
+                await manager.broadcast(json.dumps(message))
+                
+            elif message.get("type") == "tracking_data":
+                # 추적 데이터 브로드캐스트
+                await manager.broadcast(json.dumps(message))
+            
             await handle_esp32_data(message)
             
     except WebSocketDisconnect:
@@ -80,20 +97,23 @@ async def esp32_websocket(websocket: WebSocket):
 # === REST API 엔드포인트 ===
 
 class MotorMoveRequest(BaseModel):
-    motor_move: int  # 10: 순찰, 11: 추적, 1-9: 수동
+    motor_move: int  # 10: 순찰, 1-9: 수동 위치
 
 class SprayWaterRequest(BaseModel):
     spray_water: int  # 0: 정지, 1: 시작
 
+class TrackingModeRequest(BaseModel):
+    mode: str  # "자동" 또는 "수동"
+
 @app.post("/api/control/motor")
 async def control_motor(request: MotorMoveRequest):
     """모터 제어 API"""
-    if request.motor_move not in list(range(1, 10)) + [10, 11]:
+    if request.motor_move not in list(range(1, 10)) + [10]:
         raise HTTPException(status_code=400, detail="유효하지 않은 motor_move 값입니다.")
     
     await send_motor_move(request.motor_move)
     
-    mode_name = "순찰" if request.motor_move == 10 else "추적" if request.motor_move == 11 else f"수동(구역 {request.motor_move})"
+    mode_name = "순찰" if request.motor_move == 10 else f"수동(구역 {request.motor_move})"
     
     return {
         "success": True,
@@ -115,6 +135,31 @@ async def control_spray(request: SprayWaterRequest):
         "success": True,
         "message": f"쿨링포그 {status} 명령 전송",
         "spray_water": request.spray_water
+    }
+
+@app.post("/api/control/tracking-mode")
+async def set_tracking_mode(request: TrackingModeRequest):
+    """추적 모드 설정 API
+    - 자동: 순찰하면서 25도 이상 구역에 자동 분사
+    - 수동: 순찰하면서 사용자가 클릭한 구역에만 분사
+    """
+    if request.mode not in ["자동", "수동"]:
+        raise HTTPException(status_code=400, detail="유효하지 않은 모드입니다. '자동' 또는 '수동'만 가능합니다.")
+    
+    # ESP32/라즈베리파이로 모드 전송
+    mode_command = {
+        "command": "set_mode",
+        "mode": request.mode
+    }
+    
+    if manager.esp32_connection:
+        await manager.esp32_connection.send_text(json.dumps(mode_command))
+    
+    return {
+        "success": True,
+        "message": f"추적 모드 변경: {request.mode}",
+        "mode": request.mode,
+        "description": "순찰 중 25도 이상 자동 분사" if request.mode == "자동" else "순찰 중 클릭한 구역에만 분사"
     }
 
 @app.get("/api/system/status")
@@ -197,13 +242,13 @@ async def startup_event():
     print("포트: 8050")
     print("WebSocket 엔드포인트:")
     print("  - /ws/realtime (웹 클라이언트)")
-    print("  - /ws/esp32 (ESP32 하드웨어)")
+    print("  - /ws/esp32 (라즈베리파이/ESP32 하드웨어)")
     print("=" * 50)
     print("실시간 데이터 생성 시작...")
     
-    # 시뮬레이션 데이터 생성 (ESP32 미연결 시)
+    # 시뮬레이션 데이터 생성 (하드웨어 미연결 시)
     asyncio.create_task(generate_sensor_data())      # 5초 주기
-    asyncio.create_task(generate_tracking_data())    # 2초 주기 + 1~2초 주기
+    asyncio.create_task(generate_tracking_data())    # 2초 주기
 
 if __name__ == "__main__":
     import uvicorn

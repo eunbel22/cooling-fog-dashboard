@@ -65,13 +65,13 @@ const ControlTab = ({
         <div className="tracking-section-half">
           <h3>
             <img src="/assets/icons/tracking-control.svg" alt="tracking-control" className="section-icon" />
-            추적제어
+            분사 모드
           </h3>
           
           <div className="tracking-content-vertical">
             <div className="mode-selector-vertical">
               <div className="mode-buttons-full">
-                {['자동', '수동', '끄기'].map((mode) => (
+                {['자동', '수동'].map((mode) => (
                   <button
                     key={mode}
                     onClick={() => handleTrackingModeChange(mode)}
@@ -79,13 +79,22 @@ const ControlTab = ({
                     className={`mode-button-full ${
                       mode === '자동' && selectedMode === mode ? 'active-blue' :
                       mode === '수동' && selectedMode === mode ? 'active-white' :
-                      mode === '끄기' && selectedMode === mode ? 'active-gray' :
                       'inactive'
                     }`}
                   >
-                    {mode}
+                    {mode === '자동' ? '자동 분사' : '수동 분사'}
                   </button>
                 ))}
+              </div>
+              
+              {/* 모드 설명 */}
+              <div className="mode-description">
+                {selectedMode === '자동' && (
+                  <p>🌡️ 순찰 중 25도 이상 구역에 자동 분사</p>
+                )}
+                {selectedMode === '수동' && (
+                  <p>👆 순찰 중 클릭한 구역에만 분사</p>
+                )}
               </div>
             </div>                  
           </div>
