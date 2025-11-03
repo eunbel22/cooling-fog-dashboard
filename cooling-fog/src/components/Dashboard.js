@@ -6,7 +6,6 @@ import { useScheduleManager } from '../hooks/useScheduleManager';
 import { useDeviceControl } from '../hooks/useDeviceControl';
 import { useVisualization } from '../hooks/useVisualization';
 import DashboardTab from './tabs/DashboardTab';
-import ControlTab from './tabs/ControlTab';
 import VisualizationTab from './tabs/VisualizationTab';
 import ScheduleTab from './tabs/ScheduleTab';
 
@@ -28,7 +27,7 @@ const Dashboard = () => {
   // 커스텀 훅 사용
   const deviceControl = useDeviceControl(setIsLoading, setError);
   const scheduleManager = useScheduleManager();
-  const visualization = useVisualization(deviceControl.selectedMode);
+  const visualization = useVisualization(deviceControl.selectedMode, humanDetected);
 
   // 모달 상태
   const [isNewScheduleModalOpen, setIsNewScheduleModalOpen] = useState(false);
@@ -51,6 +50,27 @@ const Dashboard = () => {
     isEnabled: true
   });
 
+
+  useEffect(() => {
+    const temps = Object.values(visualization.gridTemperatures);
+    
+    if (temps.length > 0) {
+      const avgTemp = temps.reduce((sum, temp) => sum + temp, 0) / temps.length;
+      setTemperature(Math.round(avgTemp * 10) / 10); // 소수점 1자리
+      console.log(`📊 [평균 온도] ${temps.length}개 격자 평균: ${avgTemp.toFixed(1)}°C`);
+    }
+  }, [visualization.gridTemperatures]);
+
+  useEffect(() => {
+    const humidities = Object.values(visualization.gridHumidities);
+    
+    if (humidities.length > 0) {
+      const avgHumidity = humidities.reduce((sum, humidity) => sum + humidity, 0) / humidities.length;
+      setHumidity(Math.round(avgHumidity)); // 정수로 반올림
+      console.log(`💧 [평균 습도] ${humidities.length}개 격자 평균: ${avgHumidity.toFixed(1)}%`);
+    }
+  }, [visualization.gridHumidities]);
+
   // 탭 변경시 데이터 로드
   useEffect(() => {
     if (activeTab === '대시보드') {
@@ -68,8 +88,6 @@ const Dashboard = () => {
       
       switch (type) {
         case 'sensor_data':
-          setTemperature(data.temperature);
-          setHumidity(data.humidity);
           setWaterTank(data.water_tank_level);
           break;
           
@@ -89,6 +107,26 @@ const Dashboard = () => {
       }
     }
   }, [lastMessage, deviceControl]);
+
+  // 인체 감지 랜덤 시뮬레이션 (테스트용) - 5초마다 70% 확률로 감지
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const randomDetected = Math.random() > 0.3; // 70% 확률로 감지
+      setHumanDetected(randomDetected);
+      console.log('🔄 [시간] 인체 감지 상태 변경:', randomDetected ? '감지됨' : '감지 안됨');
+    }, 5000); // 5초마다 변경
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // 구역 변경 시 인체 감지 랜덤 설정 (테스트용) - 60% 확률로 감지
+  useEffect(() => {
+    if (visualization.patrolCurrentGrid !== undefined) {
+      const randomDetected = Math.random() > 0.4; // 60% 확률로 감지
+      setHumanDetected(randomDetected);
+      console.log(`📍 [구역 ${visualization.patrolCurrentGrid}] 인체 감지:`, randomDetected ? '감지됨' : '감지 안됨');
+    }
+  }, [visualization.patrolCurrentGrid]);
 
   // 스케줄 체크
   useEffect(() => {
@@ -191,7 +229,6 @@ const Dashboard = () => {
       endTime,
       selectedDays,
       mode: schedule.mode,
-      //intensity: parseInt(schedule.intensity.replace('%', '')),
       isEnabled: schedule.isActive
     });
     setEditingScheduleId(schedule.id);
@@ -271,7 +308,6 @@ const Dashboard = () => {
         id: editingScheduleId,
         title: editSchedule.title,
         time: `${formatTime(editSchedule.startTime)} - ${formatTime(editSchedule.endTime)}`,
-        //intensity: `${editSchedule.intensity}%`,
         mode: editSchedule.mode,
         repeat: editSchedule.selectedDays.join(', '),
         isActive: editSchedule.isEnabled
@@ -323,9 +359,9 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* 탭 네비게이션 */}
+        {/* 탭 네비게이션 - '제어' 탭 제거 */}
         <div className="tab-navigation">
-          {['대시보드', '제어', '추적시각화', '스케줄 관리'].map((tab) => (
+          {['대시보드', '추적시각화', '스케줄 관리'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -341,15 +377,7 @@ const Dashboard = () => {
           <DashboardTab 
             temperature={temperature}
             humidity={humidity}
-            waterTank={waterTank}
             humanDetected={humanDetected}
-            distance={distance}
-            direction={direction}
-          />
-        )}
-
-        {activeTab === '제어' && (
-          <ControlTab 
             isLoading={isLoading}
             error={error}
             setError={setError}
@@ -373,6 +401,7 @@ const Dashboard = () => {
             patrolCurrentGrid={visualization.patrolCurrentGrid}
             gridTemperatures={visualization.gridTemperatures}
             GRID_POSITIONS={visualization.GRID_POSITIONS}
+            isSpraying={visualization.isSpraying}
             handleGridClick={visualization.handleGridClick}
             getDevicePositionByMode={visualization.getDevicePositionByMode}
             shouldShowTarget={visualization.shouldShowTarget}
@@ -398,13 +427,13 @@ const Dashboard = () => {
         {isEditScheduleModalOpen && (
           <div className="modal-overlay">
             <div className="modal-content">
-              <h3>스케줄 편집</h3>
+              <h3>스케줄 수정</h3>
               
               <div className="form-group">
                 <label>스케줄 이름</label>
                 <input
                   type="text"
-                  placeholder="저녁 휴식 시간"
+                  placeholder="스케줄 이름을 입력하세요"
                   value={editSchedule.title}
                   onChange={(e) => setEditSchedule(prev => ({...prev, title: e.target.value}))}
                   className="form-input"
@@ -456,13 +485,10 @@ const Dashboard = () => {
                   onChange={(e) => setEditSchedule(prev => ({...prev, mode: e.target.value}))}
                   className="form-select"
                 >
-                  <option value="자동">자동</option>
-                  <option value="수동">수동</option>
-                  <option value="끄기">끄기</option>
+                  <option value="자동">추적</option>
+                  <option value="수동">순찰</option>
                 </select>
               </div>
-
-              
 
               <div className="form-group">
                 <label 
@@ -580,9 +606,8 @@ const Dashboard = () => {
                   onChange={(e) => setNewSchedule(prev => ({...prev, mode: e.target.value}))}
                   className="form-select"
                 >
-                  <option value="자동">자동</option>
-                  <option value="수동">수동</option>
-                  <option value="끄기">끄기</option>
+                  <option value="자동">추적</option>
+                  <option value="수동">순찰</option>
                 </select>
               </div>
 

@@ -1,273 +1,357 @@
-/* DashboardTab.css - 대시보드 탭 전용 스타일 */
+/* DashboardTab.css - 3열 레이아웃 */
 
-/* 대시보드 탭 - 3열 2행 그리드 */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* 3열 */
-  grid-template-rows: repeat(2, 1fr); /* 2행 */
-  gap: 1rem;
-  margin-bottom: 2rem;
-  min-height: 450px;
-}
-
-/* 대시보드 카드 기본 스타일 - 모든 카드 가로 레이아웃 */
-.dashboard-card {
-  background: white;
-  border-radius: 1.5rem;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(229, 231, 235, 0.3);
+/* 에러 메시지 */
+.error-message {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
   display: flex;
-  flex-direction: row;
-  align-items: center;
   justify-content: space-between;
-  text-align: left;
-  min-height: 140px;
-  position: relative;
-  transition: all 0.2s ease;
-  gap: 1rem;
+  align-items: center;
 }
 
-.dashboard-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.error-message button {
+  background: none;
+  border: none;
+  color: #c33;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
 }
 
-/* 온도 카드 - 1열 1-2행 차지, 큰 아이콘 */
-.temperature-card {
-  grid-column: 1;
-  grid-row: 1 / 3;
-  min-height: 300px;
+/* 3열 레이아웃 */
+.dashboard-three-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
+  height: 100%;
 }
 
-.temperature-card .card-icon-large {
-  width: 10rem;
-  height: 12rem;
-}
-
-/* 인체 감지 카드 - 2열 1행 */
-.detection-card {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-/* 거리 방향 카드 - 2열 2행 */
-.distance-card {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-/* 습도 카드 - 3열 1행 */
-.humidity-card {
-  grid-column: 3;
-  grid-row: 1;
-}
-
-/* 물탱크 카드 - 3열 2행 */
-.water-card {
-  grid-column: 3;
-  grid-row: 2;
-}
-
-/* 대시보드 탭 전체 위험 상태 */
-.tab-content.dashboard-danger {
-  background: #fee2e2;
-  border-radius: 1rem;
-  padding: 1rem;
-  border: 2px solid #fca5a5;
-}
-
-/* 위험 상태일 때 안전 경고 메시지 */
-.safety-alert {
-  background: #dc2626;
-  color: white;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-}
-
-.safety-alert strong {
-  font-weight: 800;
-}
-
-/* 카드 콘텐츠 - 왼쪽 영역 */
-.card-content {
-  flex: 1;
+/* 센서 정보 컬럼 (왼쪽) */
+.sensor-column {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  width: 100%;
+  gap: 1rem;
 }
 
-/* 카드 아이콘 - 오른쪽 영역 */
-.card-icon-large {
-  width: 7rem;
-  height: 7rem;
+/* 컴팩트 카드 스타일 */
+.dashboard-card-compact {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.card-icon-compact {
+  width: 3.5rem;
+  height: 3.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  order: 2;
 }
 
-.card-icon-large img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.card-icon-compact img {
+  width: 2rem;
+  height: 2rem;
 }
 
-/* 카드 라벨 */
+.card-content-compact {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .card-label {
-  font-size: 1.5rem;
-  color: #6b7280;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-align: left;
+  font-size: 1.125rem;
+  color: #374151;
+  font-weight: 700;
 }
 
-/* 메인 값 표시 */
-.card-value-large {
+.card-value-compact {
   display: flex;
   align-items: baseline;
-  justify-content: flex-start;
-  margin-bottom: 0.5rem;
+  gap: 0.25rem;
 }
 
-.main-value {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #1f2937;
-  line-height: 1;
+.card-value-compact .main-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111827;
 }
 
-.value-unit {
-  font-size: 1.75rem;
-  color: #9ca3af;
-  margin-left: 0.25rem;
-  font-weight: 500;
+.card-value-compact .value-unit {
+  font-size: 1rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+/* 프로그레스 바 - 컴팩트 */
+.progress-bar-container-compact {
+  width: 100%;
+  height: 0.5rem;
+  background: #e5e7eb;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 0.25rem;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-fill.humidity {
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
 }
 
 /* 상태 텍스트 */
 .card-status {
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .status-text {
   font-size: 1rem;
-  font-weight: 600;
-  text-align: left;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
 }
 
-/* 진행률 바 컨테이너 */
-.progress-bar-container {
-  width: 100%;
-  height: 0.5rem;
-  background: #e5e7eb;
-  border-radius: 9999px;
-  overflow: hidden;
-  margin-top: 0.5rem;
+.status-text.status-good {
+  color: #10b981;
+  background: #d1fae5;
 }
 
-/* 진행률 바 채움 */
-.progress-bar-fill {
-  height: 100%;
-  border-radius: 9999px;
-  transition: width 0.3s ease;
-  position: relative;
+.status-text.status-normal {
+  color: #6b7280;
+  background: #f3f4f6;
 }
 
-.progress-bar-fill.humidity {
-  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-}
-
-.progress-bar-fill.water {
-  background: linear-gradient(90deg, #06b6d4, #0891b2);
-}
-
-/* 거리 정보 스타일 */
-.distance-info {
+/* 기기 제어 컬럼 (중간) */
+.control-column {
   display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.distance-value-large {
-  font-size: 1.75rem;
-  font-weight: bold;
-  color: #1f2937;
-}
-
-.direction-value-large {
-  font-size: 1rem;
-  color: #6366f1;
-  font-weight: 600;
-}
-
-/* 카드별 특별 스타일 - 모든 카드 흰색 배경 */
-.temperature-card,
-.humidity-card,
-.water-card,
-.detection-card,
-.distance-card {
+  flex-direction: column;
   background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
 }
 
-.temperature-card .main-value,
-.humidity-card .main-value,
-.water-card .main-value,
-.detection-card .main-value,
-.distance-card .distance-value-large {
-  color: #1f2937;
+.column-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #374151;
+  margin: 0 0 1.5rem 0;
 }
 
-.detection-card .status-text.status-good {
-  color: #065f46;
+.section-icon {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
-.detection-card .status-text.status-normal {
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.control-button-large {
+  padding: 1.5rem 2rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.control-button-large.start-button {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.control-button-large.start-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.control-button-large.pause-button {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.control-button-large.pause-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+.stop-button-large {
+  padding: 1.5rem 2rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stop-button-large:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.button-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.control-button-large:disabled,
+.stop-button-large:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 분사 모드 컬럼 (오른쪽) */
+.mode-column {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.3);
+}
+
+.mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.mode-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mode-button {
+  padding: 1.5rem 2rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
   color: #6b7280;
 }
 
-.distance-card .direction-value-large {
-  color: #6366f1;
+.mode-button.active-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.mode-button.active-white {
+  background: white;
+  color: #3b82f6;
+  border-color: #3b82f6;
+  border-width: 3px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.mode-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mode-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mode-description {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.mode-description p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
 }
 
 /* 반응형 디자인 */
-@media (max-width: 768px) {
-  .dashboard-grid {
+@media (max-width: 1200px) {
+  .dashboard-three-columns {
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    min-height: auto;
+    gap: 1.5rem;
   }
   
-  .temperature-card,
-  .detection-card,
-  .distance-card,
-  .humidity-card,
-  .water-card {
-    grid-column: 1;
-    grid-row: auto;
-    min-height: 140px;
+  .sensor-column {
+    flex-direction: row;
   }
   
-  .temperature-card {
-    min-height: 200px;
+  .dashboard-card-compact {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .sensor-column {
+    flex-direction: column;
   }
   
-  .card-icon-large {
-    width: 5rem;
-    height: 5rem;
+  .control-button-large,
+  .stop-button-large,
+  .mode-button {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
   }
   
-  .temperature-card .card-icon-large {
-    width: 7rem;
-    height: 7rem;
+  .card-value-compact .main-value {
+    font-size: 1.5rem;
   }
 }

@@ -1,29 +1,134 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { GRID_POSITIONS, PATROL_SEQUENCE, generateGridTemperature, generateGridHumidity } from '../utils/gridUtils';
 
-export const useVisualization = (selectedMode) => {
+export const useVisualization = (selectedMode, humanDetected) => {
   const [manualTargetGrid, setManualTargetGrid] = useState(null);
-  const [patrolCurrentGrid, setPatrolCurrentGrid] = useState(0);
+  const [patrolSequenceIndex, setPatrolSequenceIndex] = useState(0);
   const [gridTemperatures, setGridTemperatures] = useState({});
+  const [gridHumidities, setGridHumidities] = useState({});
+  const [isSpraying, setIsSpraying] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // ref로 최신 값 유지
+  const humanDetectedRef = useRef(humanDetected);
+  const isSprayingRef = useRef(false);
+  const selectedModeRef = useRef(selectedMode);
 
-  // 9개 격자 구역 정의 - useMemo로 메모이제이션
-  const GRID_POSITIONS = useMemo(() => [
-    { row: 0, col: 0, name: "북서", position: { top: "16.67%", left: "16.67%" } },
-    { row: 0, col: 1, name: "북중", position: { top: "16.67%", left: "50%" } },
-    { row: 0, col: 2, name: "북동", position: { top: "16.67%", left: "83.33%" } },
-    { row: 1, col: 0, name: "중서", position: { top: "50%", left: "16.67%" } },
-    { row: 1, col: 1, name: "중앙", position: { top: "50%", left: "50%" } },
-    { row: 1, col: 2, name: "중동", position: { top: "50%", left: "83.33%" } },
-    { row: 2, col: 0, name: "남서", position: { top: "83.33%", left: "16.67%" } },
-    { row: 2, col: 1, name: "남중", position: { top: "83.33%", left: "50%" } },
-    { row: 2, col: 2, name: "남동", position: { top: "83.33%", left: "83.33%" } }
-  ], []);
+  // ref 업데이트
+  useEffect(() => {
+    humanDetectedRef.current = humanDetected;
+  }, [humanDetected]);
+
+  useEffect(() => {
+    isSprayingRef.current = isSpraying;
+  }, [isSpraying]);
+
+  useEffect(() => {
+    selectedModeRef.current = selectedMode;
+  }, [selectedMode]);
+
+  // 현재 순찰 중인 실제 그리드 인덱스
+  const patrolCurrentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
+
+  // 온도 측정 함수 (previousTemp: 이전 온도값)
+  const measureTemperature = (gridIndex, previousTemp = null) => {
+    let temp;
+    
+    if (previousTemp !== null && typeof previousTemp === 'number') {
+      // 분사 후: 이전 온도에서 1~3도 감소
+      const coolingEffect = Math.random() * 2 + 1; // 1~3도 랜덤 감소
+      temp = Math.round((previousTemp - coolingEffect) * 10) / 10;
+      console.log(`❄️ [구역 ${gridIndex}] 분사 효과: ${previousTemp.toFixed(1)}°C → ${temp.toFixed(1)}°C (-${coolingEffect.toFixed(1)}°C)`);
+    } else {
+      // 처음 측정: 랜덤 온도 생성
+      temp = generateGridTemperature(gridIndex);
+      console.log(`🌡️ [구역 ${gridIndex}] 초기 측정: ${temp.toFixed(1)}°C`);
+    }
+    
+    setGridTemperatures(prevTemps => ({
+      ...prevTemps,
+      [gridIndex]: temp
+    }));
+    return temp;
+  };
+
+  // 습도 측정 함수
+  const measureHumidity = (gridIndex) => {
+    const humidity = generateGridHumidity(gridIndex);
+    console.log(`💧 [구역 ${gridIndex}] 습도 측정: ${humidity}%`);
+    
+    setGridHumidities(prevHumidities => ({
+      ...prevHumidities,
+      [gridIndex]: humidity
+    }));
+    return humidity;
+  };
+
+  // 다음 구역으로 이동
+  const moveToNextGrid = () => {
+    setPatrolSequenceIndex(prev => (prev + 1) % PATROL_SEQUENCE.length);
+    setIsSpraying(false);
+    setManualTargetGrid(null);
+  };
+
+  // 자동 모드: 분사 실행 및 재확인
+  const executeAutoSpray = (gridIndex, currentTemp) => {
+    setIsSpraying(true);
+    console.log(`💨 [구역 ${gridIndex}] 10초 분사 시작 (현재 온도: ${currentTemp}°C)`);
+    
+    // 10초 분사
+    setTimeout(() => {
+      // 분사 완료 후 즉시 재측정 (온도 감소 적용 - 이전 온도 전달)
+      const newTemp = measureTemperature(gridIndex, currentTemp);
+      measureHumidity(gridIndex); // 습도도 함께 측정
+      setIsSpraying(false);
+      
+      // 짧은 딜레이 후 조건 재확인
+      setTimeout(() => {
+        const stillHumanDetected = humanDetectedRef.current;
+        const shouldContinue = stillHumanDetected && newTemp >= 22;
+        
+        if (shouldContinue) {
+          // 조건 여전히 만족 → 다시 분사
+          console.log(`✅ [구역 ${gridIndex}] 조건 만족 - 계속 분사 (인체: ${stillHumanDetected}, 온도: ${newTemp}°C)`);
+          executeAutoSpray(gridIndex, newTemp);
+        } else {
+          // 조건 불만족 → 다음 구역으로
+          console.log(`⭕ [구역 ${gridIndex}] 조건 불만족 - 다음 구역 (인체: ${stillHumanDetected}, 온도: ${newTemp}°C)`);
+          moveToNextGrid();
+        }
+      }, 100); // 100ms 딜레이
+    }, 10000); // 10초 분사
+  };
+
+  // 수동 모드: 클릭 시 분사
+  const handleManualSpray = (gridIndex) => {
+    if (selectedModeRef.current === '수동' && gridIndex === patrolCurrentGrid && !isSprayingRef.current) {
+      setManualTargetGrid(gridIndex);
+      setIsSpraying(true);
+      
+      // 현재 온도 가져오기
+      const currentTemp = gridTemperatures[gridIndex];
+      console.log(`👆 [구역 ${gridIndex}] 클릭 - 10초 분사 시작 (현재 온도: ${currentTemp}°C)`);
+      
+      // 10초 분사
+      setTimeout(() => {
+        setIsSpraying(false);
+        // 재측정 후 다음 구역으로 (온도 감소 적용 - 이전 온도 전달)
+        measureTemperature(gridIndex, currentTemp);
+        measureHumidity(gridIndex); // 습도도 함께 측정
+        
+        setTimeout(() => {
+          moveToNextGrid();
+        }, 100);
+      }, 10000);
+    }
+  };
 
   // 격자 클릭 핸들러
   const handleGridClick = useCallback((gridIndex) => {
-    if (selectedMode === '수동') {
-      setManualTargetGrid(gridIndex);
-    }
-  }, [selectedMode]);
+    handleManualSpray(gridIndex);
+  }, [patrolCurrentGrid]);
 
   // 쿨링포그 위치 계산
   const getDevicePositionByMode = useCallback(() => {
@@ -33,40 +138,65 @@ export const useVisualization = (selectedMode) => {
       left: currentGrid.position.left,
       transform: 'translate(-50%, 50%)'
     };
-  }, [GRID_POSITIONS, patrolCurrentGrid]);
+  }, [patrolCurrentGrid]);
 
   const shouldShowTarget = useCallback(() => false, []);
   const shouldShowGridOverlay = useCallback(() => selectedMode === '수동', [selectedMode]);
 
-  // 순찰 로직
+  // 통합된 순찰 로직 - 모든 구역에서 동일하게 작동
   useEffect(() => {
-    const patrolInterval = setInterval(() => {
-      setPatrolCurrentGrid(prev => {
-        const nextGrid = (prev + 1) % 9;
-        
-        // 온도 생성
-        const baseTemp = 26;
-        const variation = Math.random() * 6 - 3;
-        const gridVariation = (nextGrid % 3) * 0.5;
-        const temp = Math.round((baseTemp + variation + gridVariation) * 10) / 10;
-        
-        setGridTemperatures(prevTemps => ({
-          ...prevTemps,
-          [nextGrid]: temp
-        }));
-        
-        return nextGrid;
-      });
-    }, 3000);
+    // 분사 중이면 실행 안함
+    if (isSpraying) return;
+
+    // 첫 마운트 시에만 초기화 플래그 설정
+    if (!isInitialized && patrolSequenceIndex === 0) {
+      setIsInitialized(true);
+    }
+
+    const currentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
+    console.log(`🔍 구역 ${patrolSequenceIndex} (실제 그리드 ${currentGrid}) 도착`);
     
-    return () => clearInterval(patrolInterval);
-  }, []);
+    // 2초 후 온도 측정
+    const measureTimer = setTimeout(() => {
+      const temp = measureTemperature(currentGrid, false);
+      measureHumidity(currentGrid); // 습도도 함께 측정
+      
+      if (selectedModeRef.current === '자동') {
+        // 자동 모드: 조건 확인
+        const shouldSpray = humanDetectedRef.current && temp >= 22;
+        
+        if (shouldSpray) {
+          console.log(`🎯 [구역 ${currentGrid}] 자동 분사 조건 만족 (인체: ${humanDetectedRef.current}, 온도: ${temp}°C)`);
+          executeAutoSpray(currentGrid, temp);
+        } else {
+          // 조건 불만족 → 다음 구역
+          console.log(`⭕ [구역 ${currentGrid}] 조건 불만족 - 다음 구역 (인체: ${humanDetectedRef.current}, 온도: ${temp}°C)`);
+          setTimeout(moveToNextGrid, 100);
+        }
+      } else {
+        // 수동 모드: 2초 대기 후 클릭 없으면 다음 구역
+        console.log(`⏸️ [구역 ${currentGrid}] 수동 모드 - 클릭 대기 중`);
+        const waitTimer = setTimeout(() => {
+          if (!isSprayingRef.current) {
+            console.log(`⭕ [구역 ${currentGrid}] 클릭 없음 - 다음 구역`);
+            moveToNextGrid();
+          }
+        }, 2000);
+        
+        return () => clearTimeout(waitTimer);
+      }
+    }, 2000);
+    
+    return () => clearTimeout(measureTimer);
+  }, [patrolSequenceIndex, isSpraying, isInitialized]);
 
   return {
     manualTargetGrid,
     patrolCurrentGrid,
     gridTemperatures,
+    gridHumidities,
     GRID_POSITIONS,
+    isSpraying,
     handleGridClick,
     getDevicePositionByMode,
     shouldShowTarget,

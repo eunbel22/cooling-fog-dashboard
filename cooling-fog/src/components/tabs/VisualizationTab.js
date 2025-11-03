@@ -12,6 +12,7 @@ const VisualizationTab = ({
   patrolCurrentGrid,
   gridTemperatures,
   GRID_POSITIONS,
+  isSpraying,
   handleGridClick,
   getDevicePositionByMode,
   shouldShowTarget,
@@ -30,11 +31,11 @@ const VisualizationTab = ({
             className={`grid-cell ${manualTargetGrid === index ? 'selected' : ''}`}
             style={{
               position: 'absolute',
-              top: `${(grid.row * 33.33)}%`,
-              left: `${(grid.col * 33.33)}%`,
-              width: '33.33%',
-              height: '33.33%',
-              cursor: 'pointer'  // 추가
+              top: `${(grid.row * 25)}%`,
+              left: `${(grid.col * 25)}%`,
+              width: '25%',
+              height: '25%',
+              cursor: 'pointer'
             }}
             onClick={() => handleGridClick(index)}
           >
@@ -54,41 +55,43 @@ const VisualizationTab = ({
         {GRID_POSITIONS.map((grid, index) => {
           const temp = gridTemperatures[index];
           const isCurrentGrid = patrolCurrentGrid === index;
-          const isHotZone = temp >= 25; // 25도 이상인 구역
+          const isHotZone = temp >= 22; // 22도 이상인 구역
+          const isSprayingHere = isSpraying && isCurrentGrid; // 현재 구역에서 분사 중
           
           return (
             <div
               key={index}
-              className={`temp-display ${isCurrentGrid ? 'measuring' : ''} ${isHotZone ? 'hot-zone' : ''}`}
+              className={`temp-display ${isCurrentGrid ? 'measuring' : ''} ${isHotZone ? 'hot-zone' : ''} ${isSprayingHere ? 'spraying' : ''}`}
               style={{
                 position: 'absolute',
-                top: `${(grid.row * 33.33) + 5}%`,
-                left: `${(grid.col * 33.33) + 5}%`,
-                width: '23.33%',
-                height: '23.33%',
+                top: `${(grid.row * 25) + 3}%`,
+                left: `${(grid.col * 25) + 3}%`,
+                width: '19%',
+                height: '19%',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: temp ? getTempColor(temp) : 'rgba(200, 200, 200, 0.3)',
-                border: isCurrentGrid ? '3px solid #f59e0b' : isHotZone ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.5)',
+                border: isSprayingHere ? '4px solid #10b981' : isCurrentGrid ? '3px solid #f59e0b' : isHotZone ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.5)',
                 borderRadius: '0.5rem',
                 color: 'white',
-                fontSize: '0.7rem',
+                fontSize: '0.65rem',
                 fontWeight: 'bold',
                 textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                boxShadow: isSprayingHere ? '0 0 20px rgba(16, 185, 129, 0.6)' : 'none'
               }}
             >
               {temp ? (
                 <>
                   <div className="temp-value">{temp}°C</div>
-                  <div className="temp-status" style={{ fontSize: '0.8rem', marginTop: '2px' }}>
+                  <div className="temp-status" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
                     {getTempStatusText(temp)}
                   </div>
-                  {/* 자동 모드에서 25도 이상이면 분사 표시 */}
-                  {selectedMode === '자동' && isHotZone && isCurrentGrid && (
-                    <div className="auto-spray-icon">💨</div>
+                  {/* 분사 중일 때 표시 */}
+                  {isSprayingHere && (
+                    <div className="spray-icon">💨 분사중</div>
                   )}
                 </>
               ) : (
@@ -101,21 +104,21 @@ const VisualizationTab = ({
     );
   };
 
-  // 온도 상태 텍스트 반환 함수
+ // 온도 상태 텍스트 반환 함수 (22도 기준)
   const getTempStatusText = (temperature) => {
-    if (temperature < 24) return '시원';
-    if (temperature < 25) return '적정';
-    if (temperature < 27) return '따뜻';
-    if (temperature < 30) return '더움';
+    if (temperature < 20) return '시원';
+    if (temperature < 22) return '적정';
+    if (temperature < 24) return '따뜻';
+    if (temperature < 26) return '더움';
     return '매우더움';
   };
 
-  // 온도에 따른 색상 결정 함수
+  // 온도에 따른 색상 결정 함수 (22도 기준)
   const getTempColor = (temperature) => {
-    if (temperature < 24) return 'rgba(59, 130, 246, 0.8)'; // 파란색 (시원)
-    if (temperature < 25) return 'rgba(34, 197, 94, 0.8)'; // 초록색 (적정)
-    if (temperature < 27) return 'rgba(251, 191, 36, 0.8)'; // 노란색 (따뜻)
-    if (temperature < 30) return 'rgba(239, 68, 68, 0.8)'; // 빨간색 (더움)
+    if (temperature < 20) return 'rgba(59, 130, 246, 0.8)'; // 파란색 (시원)
+    if (temperature < 22) return 'rgba(34, 197, 94, 0.8)'; // 초록색 (적정)
+    if (temperature < 24) return 'rgba(251, 191, 36, 0.8)'; // 노란색 (따뜻)
+    if (temperature < 26) return 'rgba(239, 68, 68, 0.8)'; // 빨간색 (더움)
     return 'rgba(153, 27, 27, 0.8)'; // 진한 빨간색 (매우 더움)
   };
 
@@ -143,7 +146,7 @@ const VisualizationTab = ({
   // 모드별 설명 텍스트
   const getModeDescription = () => {
     if (selectedMode === '자동') {
-      return '순찰 중 - 25도 이상 구역에 자동 분사';
+      return '순찰 중 - 25도 이상 구역에 자동분사';
     } else if (selectedMode === '수동') {
       return '순찰 중 - 클릭한 구역에만 분사';
     }
@@ -180,8 +183,10 @@ const VisualizationTab = ({
               <div className="radar-grid">
                 <div className="grid-line vertical-1"></div>
                 <div className="grid-line vertical-2"></div>
+                <div className="grid-line vertical-3"></div>
                 <div className="grid-line horizontal-1"></div>
                 <div className="grid-line horizontal-2"></div>
+                <div className="grid-line horizontal-3"></div>
                 
                 {/* 수동 모드에서만 클릭 가능한 격자 표시 */}
                 <GridOverlay />
@@ -212,17 +217,12 @@ const VisualizationTab = ({
               </div>
               <div className="legend-item">
                 <div className="legend-dot" style={{backgroundColor: '#ef4444'}}></div>
-                <span>25도 이상 (고온)</span>
+                <span>22도 이상 (고온)</span>
               </div>
-              {selectedMode === '수동' && (
+              {isSpraying && (
                 <div className="legend-item">
-                  <div className="legend-dot blue"></div>
-                  <span>클릭하여 분사</span>
-                </div>
-              )}
-              {selectedMode === '자동' && (
-                <div className="legend-item">
-                  <span>💨 자동 분사 중</span>
+                  <div className="legend-dot" style={{backgroundColor: '#10b981'}}></div>
+                  <span>💨 분사 중</span>
                 </div>
               )}
             </div>
@@ -250,6 +250,12 @@ const VisualizationTab = ({
               </span>
             </div>
             <div className="camera-status">
+              <span>인체 감지:</span>
+              <span style={{color: humanDetected ? '#10b981' : '#6b7280'}}>
+                {humanDetected ? '감지됨' : '감지 안됨'}
+              </span>
+            </div>
+            <div className="camera-status">
               <span>현재 구역:</span>
               <span style={{color: '#3b82f6'}}>
                 {patrolCurrentGrid !== null ? GRID_POSITIONS[patrolCurrentGrid]?.name : '대기중'}
@@ -257,7 +263,7 @@ const VisualizationTab = ({
             </div>
             <div className="camera-status">
               <span>현재 온도:</span>
-              <span style={{color: gridTemperatures[patrolCurrentGrid] >= 25 ? '#ef4444' : '#10b981'}}>
+              <span style={{color: gridTemperatures[patrolCurrentGrid] >= 22 ? '#ef4444' : '#10b981'}}>
                 {patrolCurrentGrid !== null && gridTemperatures[patrolCurrentGrid] 
                   ? `${gridTemperatures[patrolCurrentGrid]}°C` 
                   : '---'}
