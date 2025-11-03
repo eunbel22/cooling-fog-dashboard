@@ -71,7 +71,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
     setManualTargetGrid(null);
   };
 
-  // 자동 모드: 분사 실행 및 재확인
+  // 자동 모드(추적): 분사 실행 및 재확인
   const executeAutoSpray = (gridIndex, currentTemp) => {
     setIsSpraying(true);
     console.log(`💨 [구역 ${gridIndex}] 10초 분사 시작 (현재 온도: ${currentTemp}°C)`);
@@ -101,7 +101,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
     }, 10000); // 10초 분사
   };
 
-  // 수동 모드: 클릭 시 분사
+  // 수동 모드(순찰): 클릭 시 분사
   const handleManualSpray = (gridIndex) => {
     if (selectedModeRef.current === '수동' && gridIndex === patrolCurrentGrid && !isSprayingRef.current) {
       setManualTargetGrid(gridIndex);
@@ -143,7 +143,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
   const shouldShowTarget = useCallback(() => false, []);
   const shouldShowGridOverlay = useCallback(() => selectedMode === '수동', [selectedMode]);
 
-  // 통합된 순찰 로직 - 모든 구역에서 동일하게 작동
+  // 통합된 순찰 로직 - 모드별 동작 구분
   useEffect(() => {
     // 분사 중이면 실행 안함
     if (isSpraying) return;
@@ -156,13 +156,13 @@ export const useVisualization = (selectedMode, humanDetected) => {
     const currentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
     console.log(`🔍 구역 ${patrolSequenceIndex} (실제 그리드 ${currentGrid}) 도착`);
     
-    // 2초 후 온도 측정
+    // 2초 후 온도/습도 측정
     const measureTimer = setTimeout(() => {
       const temp = measureTemperature(currentGrid, false);
       measureHumidity(currentGrid); // 습도도 함께 측정
       
       if (selectedModeRef.current === '자동') {
-        // 자동 모드: 조건 확인
+        // 자동 모드(추적): 조건 확인 후 자동 분사
         const shouldSpray = humanDetectedRef.current && temp >= 22;
         
         if (shouldSpray) {
@@ -174,11 +174,13 @@ export const useVisualization = (selectedMode, humanDetected) => {
           setTimeout(moveToNextGrid, 100);
         }
       } else {
-        // 수동 모드: 2초 대기 후 클릭 없으면 다음 구역
-        console.log(`⏸️ [구역 ${currentGrid}] 수동 모드 - 클릭 대기 중`);
+        // 수동 모드(순찰): 온도/습도만 측정하고 클릭 대기
+        console.log(`⏸️ [구역 ${currentGrid}] 순찰 모드 - 측정 완료, 클릭 대기 중`);
+        
+        // 2초 대기 후 클릭 없으면 다음 구역으로 이동
         const waitTimer = setTimeout(() => {
           if (!isSprayingRef.current) {
-            console.log(`⭕ [구역 ${currentGrid}] 클릭 없음 - 다음 구역`);
+            console.log(`➡️ [구역 ${currentGrid}] 클릭 없음 - 다음 구역으로 이동`);
             moveToNextGrid();
           }
         }, 2000);
