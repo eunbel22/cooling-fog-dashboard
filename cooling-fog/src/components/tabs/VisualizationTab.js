@@ -28,19 +28,24 @@ const VisualizationTab = ({
         {GRID_POSITIONS.map((grid, index) => (
           <div
             key={index}
-            className={`grid-cell ${manualTargetGrid === index ? 'selected' : ''}`}
+            className={`grid-cell ${manualTargetGrid === index ? 'selected' : ''} ${patrolCurrentGrid === index ? 'current' : ''}`}
             style={{
               position: 'absolute',
               top: `${(grid.row * 25)}%`,
               left: `${(grid.col * 25)}%`,
               width: '25%',
               height: '25%',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              border: patrolCurrentGrid === index ? '3px solid #f59e0b' : '2px dashed #3b82f6'
             }}
-            onClick={() => handleGridClick(index)}
+            onClick={() => {
+              console.log(`🖱️ 클릭됨: 구역 ${index} (${grid.name}), 현재 순찰 구역: ${patrolCurrentGrid}`);
+              handleGridClick(index);
+            }}
           >
             <div style={{ textAlign: 'center' }}>
               {grid.name}
+              {patrolCurrentGrid === index && <div style={{fontSize: '0.5rem', color: '#f59e0b'}}>현재위치</div>}
             </div>
           </div>
         ))}

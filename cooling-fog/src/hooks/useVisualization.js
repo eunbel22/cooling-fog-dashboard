@@ -103,6 +103,15 @@ export const useVisualization = (selectedMode, humanDetected) => {
 
   // 수동 모드(순찰): 클릭 시 분사
   const handleManualSpray = (gridIndex) => {
+    console.log(`
+🖱️ 클릭 이벤트 발생:
+  - 클릭한 구역: ${gridIndex}
+  - 현재 모드: ${selectedModeRef.current}
+  - 현재 순찰 구역: ${patrolCurrentGrid}
+  - 분사 중: ${isSprayingRef.current}
+  - 조건 만족: ${selectedModeRef.current === '수동' && gridIndex === patrolCurrentGrid && !isSprayingRef.current}
+    `);
+    
     if (selectedModeRef.current === '수동' && gridIndex === patrolCurrentGrid && !isSprayingRef.current) {
       setManualTargetGrid(gridIndex);
       setIsSpraying(true);
@@ -122,13 +131,15 @@ export const useVisualization = (selectedMode, humanDetected) => {
           moveToNextGrid();
         }, 100);
       }, 10000);
+    } else {
+      console.log(`❌ 클릭 무시: 조건 불만족`);
     }
   };
 
   // 격자 클릭 핸들러
   const handleGridClick = useCallback((gridIndex) => {
     handleManualSpray(gridIndex);
-  }, [patrolCurrentGrid]);
+  }, [patrolCurrentGrid, gridTemperatures]);
 
   // 쿨링포그 위치 계산
   const getDevicePositionByMode = useCallback(() => {
