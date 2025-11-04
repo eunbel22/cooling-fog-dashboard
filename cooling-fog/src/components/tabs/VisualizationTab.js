@@ -168,7 +168,7 @@ const VisualizationTab = ({
   // 모드별 설명 텍스트
   const getModeDescription = () => {
     if (selectedMode === '자동') {
-      return '추적 중 - 25도 이상 구역에 자동분사';
+      return '추적 중 - 22도 이상 구역에 자동분사';
     } else if (selectedMode === '수동') {
       return '순찰 중 - 클릭한 구역에만 분사';
     }
