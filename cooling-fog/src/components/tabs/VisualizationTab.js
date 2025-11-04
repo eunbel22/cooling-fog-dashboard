@@ -22,7 +22,13 @@ const VisualizationTab = ({
   // 온도 표시 영역 - 수동 모드에서 클릭 가능
   const GridTemperatureOverlay = () => {
     return (
-      <div className="temperature-overlay">
+      <div 
+        className="temperature-overlay"
+        style={{
+          pointerEvents: 'none', // 부모는 클릭 차단
+          zIndex: selectedMode === '수동' ? 100 : 4 // 수동 모드에서 최상위
+        }}
+      >
         {GRID_POSITIONS.map((grid, index) => {
           const temp = gridTemperatures[index];
           const isCurrentGrid = patrolCurrentGrid === index;
@@ -59,11 +65,12 @@ const VisualizationTab = ({
                 boxShadow: isSelected ? '0 0 20px rgba(59, 130, 246, 0.6)' : 
                            isSprayingHere ? '0 0 20px rgba(16, 185, 129, 0.6)' : 'none',
                 cursor: isManualMode ? 'pointer' : 'default',
-                pointerEvents: isManualMode ? 'auto' : 'none',
-                zIndex: isManualMode ? 100 : 4 // 수동 모드에서 최상위로
+                pointerEvents: isManualMode ? 'auto' : 'none', // 자식은 수동 모드에서만 클릭 가능
+                zIndex: 10 // 명시적으로 높은 z-index
               }}
-              onClick={() => {
+              onClick={(e) => {
                 if (isManualMode) {
+                  e.stopPropagation(); // 이벤트 전파 중지
                   console.log(`🖱️ 클릭됨: 구역 ${index} (${grid.name}), 현재 순찰 구역: ${patrolCurrentGrid}`);
                   handleGridClick(index);
                 }
