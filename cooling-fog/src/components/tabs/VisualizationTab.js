@@ -19,41 +19,7 @@ const VisualizationTab = ({
   shouldShowGridOverlay
 }) => {
 
-  // 격자 오버레이 컴포넌트 - 수동 모드에서만 표시
-  const GridOverlay = () => {
-    if (selectedMode !== '수동') return null;
-    
-    return (
-      <div className="grid-overlay">
-        {GRID_POSITIONS.map((grid, index) => (
-          <div
-            key={index}
-            className={`grid-cell ${manualTargetGrid === index ? 'selected' : ''} ${patrolCurrentGrid === index ? 'current' : ''}`}
-            style={{
-              position: 'absolute',
-              top: `${(grid.row * 25)}%`,
-              left: `${(grid.col * 25)}%`,
-              width: '25%',
-              height: '25%',
-              cursor: 'pointer',
-              border: patrolCurrentGrid === index ? '3px solid #f59e0b' : '2px dashed #3b82f6'
-            }}
-            onClick={() => {
-              console.log(`🖱️ 클릭됨: 구역 ${index} (${grid.name}), 현재 순찰 구역: ${patrolCurrentGrid}`);
-              handleGridClick(index);
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              {grid.name}
-              {patrolCurrentGrid === index && <div style={{fontSize: '0.5rem', color: '#f59e0b'}}>현재위치</div>}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // 온도 오버레이 컴포넌트 - 항상 표시
+  // 온도 표시 영역 - 수동 모드에서 클릭 가능
   const GridTemperatureOverlay = () => {
     return (
       <div className="temperature-overlay">
@@ -62,11 +28,13 @@ const VisualizationTab = ({
           const isCurrentGrid = patrolCurrentGrid === index;
           const isHotZone = temp >= 22; // 22도 이상인 구역
           const isSprayingHere = isSpraying && isCurrentGrid; // 현재 구역에서 분사 중
+          const isManualMode = selectedMode === '수동';
+          const isSelected = manualTargetGrid === index;
           
           return (
             <div
               key={index}
-              className={`temp-display ${isCurrentGrid ? 'measuring' : ''} ${isHotZone ? 'hot-zone' : ''} ${isSprayingHere ? 'spraying' : ''}`}
+              className={`temp-display ${isCurrentGrid ? 'measuring' : ''} ${isHotZone ? 'hot-zone' : ''} ${isSprayingHere ? 'spraying' : ''} ${isSelected ? 'selected' : ''}`}
               style={{
                 position: 'absolute',
                 top: `${(grid.row * 25) + 3}%`,
@@ -78,25 +46,55 @@ const VisualizationTab = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: temp ? getTempColor(temp) : 'rgba(200, 200, 200, 0.3)',
-                border: isSprayingHere ? '4px solid #10b981' : isCurrentGrid ? '3px solid #f59e0b' : isHotZone ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.5)',
+                border: isSelected ? '4px solid #3b82f6' : 
+                        isSprayingHere ? '4px solid #10b981' : 
+                        isCurrentGrid ? '3px solid #f59e0b' : 
+                        isHotZone ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.5)',
                 borderRadius: '0.5rem',
                 color: 'white',
                 fontSize: '0.65rem',
                 fontWeight: 'bold',
                 textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)',
                 transition: 'all 0.3s ease',
-                boxShadow: isSprayingHere ? '0 0 20px rgba(16, 185, 129, 0.6)' : 'none'
+                boxShadow: isSelected ? '0 0 20px rgba(59, 130, 246, 0.6)' : 
+                           isSprayingHere ? '0 0 20px rgba(16, 185, 129, 0.6)' : 'none',
+                cursor: isManualMode ? 'pointer' : 'default',
+                pointerEvents: isManualMode ? 'auto' : 'none',
+                zIndex: isManualMode ? 100 : 4 // 수동 모드에서 최상위로
+              }}
+              onClick={() => {
+                if (isManualMode) {
+                  console.log(`🖱️ 클릭됨: 구역 ${index} (${grid.name}), 현재 순찰 구역: ${patrolCurrentGrid}`);
+                  handleGridClick(index);
+                }
               }}
             >
+              <div style={{ fontSize: '0.55rem', marginBottom: '0.2rem', opacity: 0.9 }}>
+                {grid.name}
+              </div>
               {temp ? (
                 <>
                   <div className="temp-value">{temp}°C</div>
-                  <div className="temp-status" style={{ fontSize: '0.75rem', marginTop: '2px' }}>
+                  <div className="temp-status" style={{ fontSize: '0.55rem', marginTop: '2px' }}>
                     {getTempStatusText(temp)}
                   </div>
                   {/* 분사 중일 때 표시 */}
                   {isSprayingHere && (
                     <div className="spray-icon">💨</div>
+                  )}
+                  {/* 선택된 구역 표시 (수동 모드) */}
+                  {isSelected && isManualMode && (
+                    <div style={{ 
+                      fontSize: '0.5rem', 
+                      marginTop: '0.2rem', 
+                      color: '#3b82f6', 
+                      background: 'white', 
+                      padding: '0.1rem 0.3rem', 
+                      borderRadius: '0.2rem',
+                      fontWeight: 'bold'
+                    }}>
+                      선택됨
+                    </div>
                   )}
                 </>
               ) : (
@@ -193,10 +191,7 @@ const VisualizationTab = ({
                 <div className="grid-line horizontal-2"></div>
                 <div className="grid-line horizontal-3"></div>
                 
-                {/* 수동 모드에서만 클릭 가능한 격자 표시 */}
-                <GridOverlay />
-                
-                {/* 온도 오버레이는 항상 표시 */}
+                {/* 온도 표시 - 수동 모드에서 클릭 가능 */}
                 <GridTemperatureOverlay />
                 
                 <div 
