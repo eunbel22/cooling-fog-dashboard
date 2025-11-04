@@ -91,7 +91,7 @@ const VisualizationTab = ({
                   </div>
                   {/* 분사 중일 때 표시 */}
                   {isSprayingHere && (
-                    <div className="spray-icon">💨 분사중</div>
+                    <div className="spray-icon">💨</div>
                   )}
                 </>
               ) : (

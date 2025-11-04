@@ -1,4 +1,4 @@
-/* VisualizationTab.css - 추적시각화 탭 전용 스타일 */
+/* VisualizationTab.css - 추적시각화 탭 전용 스타일 (4x4 그리드) */
 
 /* 시각화 섹션 2열 레이아웃 */
 .visualization-content {
@@ -97,7 +97,7 @@
   box-sizing: border-box;
 }
 
-/* 격자선 */
+/* 격자선 - 4x4 그리드 */
 .grid-line {
   position: absolute;
   background: #e2e8f0;
@@ -320,7 +320,7 @@
   width: 100%;
   height: 100%;
   z-index: 4;
-  pointer-events: none;
+  pointer-events: none; /* 클릭 이벤트 통과 */
 }
 
 .temp-display {
@@ -328,6 +328,7 @@
   backdrop-filter: blur(2px);
   transition: all 0.3s ease;
   text-align: center;
+  pointer-events: none; /* 클릭 이벤트 통과 - 추가 */
 }
 
 .temp-display.measuring {
@@ -341,6 +342,34 @@
 @keyframes measuring-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.8; }
+}
+
+.temp-display.spraying {
+  animation: spray-pulse 1s infinite;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+}
+
+@keyframes spray-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.8);
+  }
+}
+
+.spray-icon {
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
+  font-weight: bold;
+  color: #10b981;
+  background: white;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  animation: bounce 1s infinite;
 }
 
 .grid-name {
@@ -484,4 +513,3 @@
     font-size: 0.65rem;
   }
 }
-
