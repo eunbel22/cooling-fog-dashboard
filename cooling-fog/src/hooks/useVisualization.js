@@ -71,6 +71,16 @@ export const useVisualization = (selectedMode, humanDetected) => {
     setManualTargetGrid(null);
   };
 
+  // 특정 구역으로 직접 이동 (수동 모드용)
+  const moveToSpecificGrid = (targetGridIndex) => {
+    // PATROL_SEQUENCE에서 targetGridIndex의 위치 찾기
+    const sequenceIndex = PATROL_SEQUENCE.indexOf(targetGridIndex);
+    if (sequenceIndex !== -1) {
+      setPatrolSequenceIndex(sequenceIndex);
+      console.log(`🎯 [구역 ${targetGridIndex}] 로 즉시 이동 (시퀀스 인덱스: ${sequenceIndex})`);
+    }
+  };
+
   // 자동 모드(추적): 분사 실행 및 재확인
   const executeAutoSpray = (gridIndex, currentTemp) => {
     setIsSpraying(true);
@@ -101,7 +111,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
     }, 10000); // 10초 분사
   };
 
-  // 수동 모드(순찰): 클릭 시 분사
+  // 수동 모드(순찰): 클릭 시 해당 구역으로 이동 후 분사
   const handleManualSpray = (gridIndex) => {
     console.log(`
 🖱️ 클릭 이벤트 발생:
@@ -109,30 +119,41 @@ export const useVisualization = (selectedMode, humanDetected) => {
   - 현재 모드: ${selectedModeRef.current}
   - 현재 순찰 구역: ${patrolCurrentGrid}
   - 분사 중: ${isSprayingRef.current}
-  - 조건 만족: ${selectedModeRef.current === '수동' && gridIndex === patrolCurrentGrid && !isSprayingRef.current}
     `);
     
-    if (selectedModeRef.current === '수동' && gridIndex === patrolCurrentGrid && !isSprayingRef.current) {
+    // 수동 모드이고 분사 중이 아닐 때만 동작
+    if (selectedModeRef.current === '수동' && !isSprayingRef.current) {
       setManualTargetGrid(gridIndex);
-      setIsSpraying(true);
       
-      // 현재 온도 가져오기
-      const currentTemp = gridTemperatures[gridIndex];
-      console.log(`👆 [구역 ${gridIndex}] 클릭 - 10초 분사 시작 (현재 온도: ${currentTemp}°C)`);
+      // 클릭한 구역으로 즉시 이동
+      moveToSpecificGrid(gridIndex);
       
-      // 10초 분사
+      // 이동 후 2초 대기 (이동 애니메이션)
       setTimeout(() => {
-        setIsSpraying(false);
-        // 재측정 후 다음 구역으로 (온도 감소 적용 - 이전 온도 전달)
-        measureTemperature(gridIndex, currentTemp);
-        measureHumidity(gridIndex); // 습도도 함께 측정
+        // 온도/습도 측정
+        const temp = measureTemperature(gridIndex);
+        measureHumidity(gridIndex);
         
+        console.log(`👆 [구역 ${gridIndex}] 도착 - 10초 분사 시작 (온도: ${temp}°C)`);
+        setIsSpraying(true);
+        
+        // 10초 분사
         setTimeout(() => {
-          moveToNextGrid();
-        }, 100);
-      }, 10000);
+          // 분사 완료 후 재측정 (온도 감소 적용)
+          const newTemp = measureTemperature(gridIndex, temp);
+          measureHumidity(gridIndex);
+          setIsSpraying(false);
+          
+          console.log(`✅ [구역 ${gridIndex}] 분사 완료 - 다음 구역으로 이동`);
+          
+          // 다음 구역으로 순찰 재개
+          setTimeout(() => {
+            moveToNextGrid();
+          }, 100);
+        }, 10000); // 10초 분사
+      }, 2000); // 2초 이동 시간
     } else {
-      console.log(`❌ 클릭 무시: 조건 불만족`);
+      console.log(`❌ 클릭 무시: 조건 불만족 (모드: ${selectedModeRef.current}, 분사중: ${isSprayingRef.current})`);
     }
   };
 
@@ -165,7 +186,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
     }
 
     const currentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
-    console.log(`🔍 구역 ${patrolSequenceIndex} (실제 그리드 ${currentGrid}) 도착`);
+    console.log(`📍 구역 ${patrolSequenceIndex} (실제 그리드 ${currentGrid}) 도착`);
     
     // 2초 후 온도/습도 측정
     const measureTimer = setTimeout(() => {
