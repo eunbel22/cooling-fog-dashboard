@@ -9,12 +9,13 @@
 }
 
 .radar-container {
-  flex: 1;
+  flex: 0 0 800px;  /* 600px 고정 */
   min-width: 0;
 }
 
 .camera-container {
-  flex: 0 0 400px;
+  flex: 0 0 800px;  /* 400px 고정 */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -42,6 +43,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-height: 495px;  /* radar-section과 동일한 높이 */
 }
 
 .radar-section h4, .camera-section h4 {
@@ -72,6 +74,7 @@
 .camera-feed {
   background: #111827;
   min-height: 350px;
+  aspect-ratio: 1 / 1;  /* 1:1 비율로 변경 */
 }
 
 /* 레이더 차트 */
@@ -417,6 +420,7 @@
   .camera-container {
     flex: none;
     width: 100%;
+    min-width: 0;
   }
   
   .radar-chart {
