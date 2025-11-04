@@ -21,12 +21,14 @@ const VisualizationTab = ({
 
   // 온도 표시 영역 - 수동 모드에서 클릭 가능
   const GridTemperatureOverlay = () => {
+    const isManualMode = selectedMode === '수동';
+    
     return (
       <div 
         className="temperature-overlay"
         style={{
           pointerEvents: 'none', // 부모는 클릭 차단
-          zIndex: selectedMode === '수동' ? 100 : 4 // 수동 모드에서 최상위
+          zIndex: isManualMode ? 100 : 4 // 수동 모드에서 높게, 하지만 장치(1000)보다는 낮게
         }}
       >
         {GRID_POSITIONS.map((grid, index) => {
@@ -34,7 +36,6 @@ const VisualizationTab = ({
           const isCurrentGrid = patrolCurrentGrid === index;
           const isHotZone = temp >= 22; // 22도 이상인 구역
           const isSprayingHere = isSpraying && isCurrentGrid; // 현재 구역에서 분사 중
-          const isManualMode = selectedMode === '수동';
           const isSelected = manualTargetGrid === index;
           
           return (
@@ -65,13 +66,24 @@ const VisualizationTab = ({
                 boxShadow: isSelected ? '0 0 20px rgba(59, 130, 246, 0.6)' : 
                            isSprayingHere ? '0 0 20px rgba(16, 185, 129, 0.6)' : 'none',
                 cursor: isManualMode ? 'pointer' : 'default',
-                pointerEvents: isManualMode ? 'auto' : 'none', // 자식은 수동 모드에서만 클릭 가능
-                zIndex: 10 // 명시적으로 높은 z-index
+                pointerEvents: isManualMode ? 'auto' : 'none', // 수동 모드에서만 클릭 가능
+                zIndex: isManualMode ? 101 : 5 // 수동 모드에서 부모보다 높게, 하지만 장치보다는 낮게
+              }}
+              onMouseDown={(e) => {
+                // mousedown 이벤트로 변경 (더 빠른 반응)
+                if (isManualMode) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log(`🖱️ 클릭됨: 구역 ${index} (${grid.name}), 현재 순찰 구역: ${patrolCurrentGrid}`);
+                  handleGridClick(index);
+                }
               }}
               onClick={(e) => {
+                // onClick도 유지 (백업)
                 if (isManualMode) {
-                  e.stopPropagation(); // 이벤트 전파 중지
-                  console.log(`🖱️ 클릭됨: 구역 ${index} (${grid.name}), 현재 순찰 구역: ${patrolCurrentGrid}`);
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log(`🖱️ onClick: 구역 ${index} (${grid.name})`);
                   handleGridClick(index);
                 }
               }}
