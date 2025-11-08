@@ -14,6 +14,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
   const isSprayingRef = useRef(false);
   const selectedModeRef = useRef(selectedMode);
   const isRunningRef = useRef(isRunning);
+  const previousIsRunningRef = useRef(isRunning); // 이전 상태 추적
 
   // ref 업데이트
   useEffect(() => {
@@ -29,14 +30,21 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
   }, [selectedMode]);
 
   useEffect(() => {
+    previousIsRunningRef.current = isRunningRef.current;
     isRunningRef.current = isRunning;
   }, [isRunning]);
 
-  // 긴급정지 시 즉시 분사 중단
+  // 긴급정지 처리 - 더 안전한 방식
   useEffect(() => {
-    if (!isRunning) {
+    // 이전 상태가 true였고 현재 상태가 false일 때만 긴급정지 처리
+    const wasRunning = previousIsRunningRef.current;
+    const isCurrentlyRunning = isRunning;
+    
+    if (wasRunning === true && isCurrentlyRunning === false) {
       setIsSpraying(false);
-      console.log('🛑 [긴급정지] 순찰 및 분사 즉시 중단');
+      console.log('🛑 [긴급정지] 사용자가 정지 버튼을 눌렀습니다');
+    } else if (wasRunning === false && isCurrentlyRunning === true) {
+      console.log('▶️ [시작] 사용자가 시작 버튼을 눌렀습니다');
     }
   }, [isRunning]);
 
@@ -96,15 +104,21 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
 
   // 자동 모드(추적): 분사 실행 및 재확인
   const executeAutoSpray = (gridIndex, currentTemp) => {
+    // 시작 전에 한 번 더 확인
+    if (!isRunningRef.current) {
+      console.log('⚠️ [분사 취소] 시스템이 정지 상태입니다');
+      return;
+    }
+
     setIsSpraying(true);
     console.log(`💨 [구역 ${gridIndex}] 10초 분사 시작 (현재 온도: ${currentTemp}°C)`);
     
     // 10초 분사
     setTimeout(() => {
-      // ⭐ 분사 중에 정지되었는지 확인
+      // 분사 중에 정지되었는지 확인
       if (!isRunningRef.current) {
         setIsSpraying(false);
-        console.log('🛑 [분사 중 정지] 분사 중단됨');
+        console.log('🛑 [분사 중 정지] 분사가 중단되었습니다');
         return;
       }
 
@@ -117,23 +131,29 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
         setIsSpraying(false);
         
         setTimeout(() => {
+          // 다시 한 번 동작 상태 확인
+          if (!isRunningRef.current) {
+            console.log('⚠️ [재분사 취소] 시스템이 정지되었습니다');
+            return;
+          }
+
           const shouldContinue = newTemp >= 22;
           
-          if (shouldContinue && isRunningRef.current) {
+          if (shouldContinue) {
             // 가축 감지 + 고온 + 동작 중 → 계속 분사
             console.log(`🔄 [구역 ${gridIndex}] 가축 여전히 감지 + 고온 → 계속 분사 (가축: 감지됨, 온도: ${newTemp}°C)`);
             executeAutoSpray(gridIndex, newTemp);
           } else {
-            // 가축 감지되지만 저온이거나 정지됨 → 다음 구역
-            console.log(`❄️ [구역 ${gridIndex}] 가축 감지되지만 저온 또는 정지됨 → 다음 구역 (가축: 감지됨, 온도: ${newTemp}°C)`);
-            if (isRunningRef.current) moveToNextGrid();
+            // 가축 감지되지만 저온 → 다음 구역
+            console.log(`❄️ [구역 ${gridIndex}] 가축 감지되지만 저온 → 다음 구역 (가축: 감지됨, 온도: ${newTemp}°C)`);
+            moveToNextGrid();
           }
         }, 100);
       } else {
         // 가축 미감지 → 온도 측정 없이 바로 다음 구역
         setIsSpraying(false);
         console.log(`👻 [구역 ${gridIndex}] 가축 미감지 → 다음 구역으로 이동`);
-        if (isRunningRef.current) setTimeout(moveToNextGrid, 100);
+        setTimeout(moveToNextGrid, 100);
       }
     }, 10000); // 10초 분사
   };
@@ -159,7 +179,10 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
       // 이동 후 2초 대기 (이동 애니메이션)
       setTimeout(() => {
         // 정지되었는지 다시 확인
-        if (!isRunningRef.current) return;
+        if (!isRunningRef.current) {
+          console.log('⚠️ [수동 분사 취소] 시스템이 정지되었습니다');
+          return;
+        }
 
         // 온도/습도 측정
         const temp = measureTemperature(gridIndex);
@@ -224,7 +247,10 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
     // 2초 후 모드별 동작
     const measureTimer = setTimeout(() => {
       // ⭐ 타이머 실행 중에도 isRunning 상태 다시 확인
-      if (!isRunningRef.current) return;
+      if (!isRunningRef.current) {
+        console.log('⚠️ [순찰 취소] 타이머 실행 중 시스템이 정지되었습니다');
+        return;
+      }
       
       if (selectedModeRef.current === '자동') {
         // 자동 모드(추적): 가축 감지 우선 확인
