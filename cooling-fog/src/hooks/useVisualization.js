@@ -88,26 +88,33 @@ export const useVisualization = (selectedMode, humanDetected) => {
     
     // 10초 분사
     setTimeout(() => {
-      // 분사 완료 후 즉시 재측정 (온도 감소 적용 - 이전 온도 전달)
-      const newTemp = measureTemperature(gridIndex, currentTemp);
-      measureHumidity(gridIndex); // 습도도 함께 측정
-      setIsSpraying(false);
+      const stillHumanDetected = humanDetectedRef.current;
       
-      // 짧은 딜레이 후 조건 재확인
-      setTimeout(() => {
-        const stillHumanDetected = humanDetectedRef.current;
-        const shouldContinue = stillHumanDetected && newTemp >= 22;
+      if (stillHumanDetected) {
+        // 가축이 여전히 감지됨 → 온도 재측정
+        const newTemp = measureTemperature(gridIndex, currentTemp);
+        measureHumidity(gridIndex);
+        setIsSpraying(false);
         
-        if (shouldContinue) {
-          // 조건 여전히 만족 → 다시 분사
-          console.log(`✅ [구역 ${gridIndex}] 조건 만족 - 계속 분사 (인체: ${stillHumanDetected}, 온도: ${newTemp}°C)`);
-          executeAutoSpray(gridIndex, newTemp);
-        } else {
-          // 조건 불만족 → 다음 구역으로
-          console.log(`⭕ [구역 ${gridIndex}] 조건 불만족 - 다음 구역 (인체: ${stillHumanDetected}, 온도: ${newTemp}°C)`);
-          moveToNextGrid();
-        }
-      }, 100); // 100ms 딜레이
+        setTimeout(() => {
+          const shouldContinue = newTemp >= 22;
+          
+          if (shouldContinue) {
+            // 가축 감지 + 고온 → 계속 분사
+            console.log(`🔄 [구역 ${gridIndex}] 가축 여전히 감지 + 고온 → 계속 분사 (가축: 감지됨, 온도: ${newTemp}°C)`);
+            executeAutoSpray(gridIndex, newTemp);
+          } else {
+            // 가축 감지되지만 저온 → 다음 구역
+            console.log(`❄️ [구역 ${gridIndex}] 가축 감지되지만 저온 → 다음 구역 (가축: 감지됨, 온도: ${newTemp}°C)`);
+            moveToNextGrid();
+          }
+        }, 100);
+      } else {
+        // 가축 미감지 → 온도 측정 없이 바로 다음 구역
+        setIsSpraying(false);
+        console.log(`👻 [구역 ${gridIndex}] 가축 미감지 → 다음 구역으로 이동`);
+        setTimeout(moveToNextGrid, 100);
+      }
     }, 10000); // 10초 분사
   };
 
@@ -188,25 +195,33 @@ export const useVisualization = (selectedMode, humanDetected) => {
     const currentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
     console.log(`📍 구역 ${patrolSequenceIndex} (실제 그리드 ${currentGrid}) 도착`);
     
-    // 2초 후 온도/습도 측정
+    // 2초 후 모드별 동작
     const measureTimer = setTimeout(() => {
-      const temp = measureTemperature(currentGrid, false);
-      measureHumidity(currentGrid); // 습도도 함께 측정
-      
       if (selectedModeRef.current === '자동') {
-        // 자동 모드(추적): 조건 확인 후 자동 분사
-        const shouldSpray = humanDetectedRef.current && temp >= 22;
-        
-        if (shouldSpray) {
-          console.log(`🎯 [구역 ${currentGrid}] 자동 분사 조건 만족 (인체: ${humanDetectedRef.current}, 온도: ${temp}°C)`);
-          executeAutoSpray(currentGrid, temp);
+        // 자동 모드(추적): 가축 감지 우선 확인
+        if (humanDetectedRef.current) {
+          // 가축 감지됨 → 온도 측정 후 조건 확인
+          const temp = measureTemperature(currentGrid, false);
+          measureHumidity(currentGrid);
+          
+          const shouldSpray = temp >= 22;
+          
+          if (shouldSpray) {
+            console.log(`🎯 [구역 ${currentGrid}] 가축 감지 + 고온 → 분사 시작 (가축: 감지됨, 온도: ${temp}°C)`);
+            executeAutoSpray(currentGrid, temp);
+          } else {
+            console.log(`❄️ [구역 ${currentGrid}] 가축 감지되지만 저온 → 다음 구역 (가축: 감지됨, 온도: ${temp}°C)`);
+            setTimeout(moveToNextGrid, 100);
+          }
         } else {
-          // 조건 불만족 → 다음 구역
-          console.log(`⭕ [구역 ${currentGrid}] 조건 불만족 - 다음 구역 (인체: ${humanDetectedRef.current}, 온도: ${temp}°C)`);
+          // 가축 감지 안됨 → 온도 측정 없이 바로 다음 구역
+          console.log(`👻 [구역 ${currentGrid}] 가축 미감지 → 다음 구역으로 이동`);
           setTimeout(moveToNextGrid, 100);
         }
       } else {
         // 수동 모드(순찰): 온도/습도만 측정하고 클릭 대기
+        const temp = measureTemperature(currentGrid, false);
+        measureHumidity(currentGrid);
         console.log(`⏸️ [구역 ${currentGrid}] 순찰 모드 - 측정 완료, 클릭 대기 중`);
         
         // 2초 대기 후 클릭 없으면 다음 구역으로 이동
@@ -223,6 +238,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
     
     return () => clearTimeout(measureTimer);
   }, [patrolSequenceIndex, isSpraying, isInitialized]);
+
 
   return {
     manualTargetGrid,

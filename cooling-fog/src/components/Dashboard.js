@@ -16,7 +16,6 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [temperature, setTemperature] = useState(28.5);
   const [humidity, setHumidity] = useState(65);
-  const [waterTank, setWaterTank] = useState(70);
   const [humanDetected, setHumanDetected] = useState(true);
   const [distance, setDistance] = useState(2.3);
   const [direction, setDirection] = useState('북쪽');
@@ -87,10 +86,7 @@ const Dashboard = () => {
       const { type, data } = lastMessage;
       
       switch (type) {
-        case 'sensor_data':
-          setWaterTank(data.water_tank_level);
-          break;
-          
+                
         case 'tracking_data':
           setHumanDetected(data.human_detected);
           setDistance(data.distance);
@@ -108,23 +104,23 @@ const Dashboard = () => {
     }
   }, [lastMessage, deviceControl]);
 
-  // 인체 감지 랜덤 시뮬레이션 (테스트용) - 5초마다 70% 확률로 감지
+  // 가축 감지 랜덤 시뮬레이션 (테스트용) - 5초마다 70% 확률로 감지
   useEffect(() => {
     const interval = setInterval(() => {
-      const randomDetected = Math.random() > 0.3; // 70% 확률로 감지
+      const randomDetected = Math.random() > 0.7; // 30% 확률로 감지
       setHumanDetected(randomDetected);
-      console.log('🔄 [시간] 인체 감지 상태 변경:', randomDetected ? '감지됨' : '감지 안됨');
+      console.log('🔄 [시간] 가축 감지 상태 변경:', randomDetected ? '감지됨' : '감지 안됨');
     }, 5000); // 5초마다 변경
     
     return () => clearInterval(interval);
   }, []);
 
-  // 구역 변경 시 인체 감지 랜덤 설정 (테스트용) - 60% 확률로 감지
+  // 구역 변경 시 가축 감지 랜덤 설정 (테스트용) - 60% 확률로 감지
   useEffect(() => {
     if (visualization.patrolCurrentGrid !== undefined) {
-      const randomDetected = Math.random() > 0.4; // 60% 확률로 감지
+      const randomDetected = Math.random() > 0.8; // 20% 확률로 감지
       setHumanDetected(randomDetected);
-      console.log(`📍 [구역 ${visualization.patrolCurrentGrid}] 인체 감지:`, randomDetected ? '감지됨' : '감지 안됨');
+      console.log(`📍 [구역 ${visualization.patrolCurrentGrid}] 가축 감지:`, randomDetected ? '감지됨' : '감지 안됨');
     }
   }, [visualization.patrolCurrentGrid]);
 
@@ -179,7 +175,6 @@ const Dashboard = () => {
       
       setTemperature(sensorResponse.data.temperature);
       setHumidity(sensorResponse.data.humidity);
-      setWaterTank(sensorResponse.data.water_tank_level);
       
       setHumanDetected(trackingResponse.data.human_detected);
       setDistance(trackingResponse.data.distance);
@@ -194,7 +189,6 @@ const Dashboard = () => {
   };
 
   // 안전 상태 함수들
-  const getSafetyStatus = () => (waterTank < 10) ? 'unsafe' : 'safe';
   const getSprayStatus = () => deviceControl.isRunning ? '동작' : '정지';
 
   // 모달 핸들러들
@@ -341,10 +335,6 @@ const Dashboard = () => {
                 <span className="status-text">{isConnected ? '실시간 연결' : '연결 끊김'}</span>
               </div>
               <div className="status-item">
-                <img src="/assets/icons/water-icon.svg" alt="Water" className="status-icon" />
-                <span className="status-text">{waterTank}%</span>
-              </div>
-              <div className="status-item">
                 <div className={`status-dot ${deviceControl.isRunning ? 'active' : 'inactive'}`}></div>
                 <span className="status-text">{getSprayStatus()}</span>
               </div>
@@ -352,12 +342,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* 안전상태 경고 */}
-        {getSafetyStatus() === 'unsafe' && (
-          <div className="safety-alert">
-            <strong>⚠️ 주의</strong> 물탱크 부족
-          </div>
-        )}
+        
 
         {/* 탭 네비게이션 - '제어' 탭 제거 */}
         <div className="tab-navigation">
@@ -485,8 +470,8 @@ const Dashboard = () => {
                   onChange={(e) => setEditSchedule(prev => ({...prev, mode: e.target.value}))}
                   className="form-select"
                 >
-                  <option value="자동">추적</option>
-                  <option value="수동">순찰</option>
+                  <option value="자동">자동</option>
+                  <option value="수동">수동</option>
                 </select>
               </div>
 
@@ -606,8 +591,8 @@ const Dashboard = () => {
                   onChange={(e) => setNewSchedule(prev => ({...prev, mode: e.target.value}))}
                   className="form-select"
                 >
-                  <option value="자동">추적</option>
-                  <option value="수동">순찰</option>
+                  <option value="자동">자동</option>
+                  <option value="수동">수동</option>
                 </select>
               </div>
 

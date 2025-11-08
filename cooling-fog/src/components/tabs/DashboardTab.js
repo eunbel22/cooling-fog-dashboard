@@ -14,7 +14,7 @@ const DashboardTab = ({
   handleEmergencyStop,
   handleTrackingModeChange
 }) => {
-  // 인체 감지 상태에 따른 아이콘 결정
+  // 가축 감지 상태에 따른 아이콘 결정
   const getHumanDetectionIcon = () => {
     return humanDetected 
       ? "/assets/icons/people-icon.svg"
@@ -38,7 +38,7 @@ const DashboardTab = ({
       {/* 3열 레이아웃 */}
       <div className="dashboard-three-columns">
         
-        {/* 왼쪽: 센서 정보 (온도 + 습도 + 인체감지) */}
+        {/* 왼쪽: 센서 정보 (온도 + 습도 + 가축감지) */}
         <div className="sensor-column">
           {/* 온도 카드 */}
           <div className="dashboard-card-compact temperature-card">
@@ -74,13 +74,13 @@ const DashboardTab = ({
             </div>
           </div>
 
-          {/* 인체 감지 카드 */}
+          {/* 가축 감지 카드 */}
           <div className="dashboard-card-compact detection-card">
             <div className="card-icon-compact">
               <img src={getHumanDetectionIcon()} alt="human-detection" />
             </div>
             <div className="card-content-compact">
-              <div className="card-label">인체 감지</div>
+              <div className="card-label">가축 감지</div>
               <div className="card-status">
                 <span className={`status-text ${getHumanDetectionStyle()}`}>
                   {humanDetected ? '감지됨' : '감지 안됨'}
@@ -149,7 +149,7 @@ const DashboardTab = ({
                     'inactive'
                   }`}
                 >
-                  {mode === '자동' ? '추적' : '순찰'}
+                  {mode === '자동' ? '자동' : '수동'}
                 </button>
               ))}
             </div>
@@ -157,7 +157,7 @@ const DashboardTab = ({
             {/* 모드 설명 */}
             <div className="mode-description">
               {selectedMode === '자동' && (
-                <p>🌡️ 인체 감지 + 22도 이상 구역에 10초 분사</p>
+                <p>🌡️ 가축 감지 + 22도 이상 구역에 10초 분사</p>
               )}
               {selectedMode === '수동' && (
                 <p>👆 순찰 중 클릭한 구역에 10초 분사</p>

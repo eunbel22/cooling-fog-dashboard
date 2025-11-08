@@ -44,10 +44,10 @@ const VisualizationTab = ({
               className={`temp-display ${isCurrentGrid ? 'measuring' : ''} ${isHotZone ? 'hot-zone' : ''} ${isSprayingHere ? 'spraying' : ''} ${isSelected ? 'selected' : ''}`}
               style={{
                 position: 'absolute',
-                top: `${(grid.row * 25) + 3}%`,
-                left: `${(grid.col * 25) + 3}%`,
-                width: '19%',
-                height: '19%',
+                top: `${(grid.row * 20) + 2}%`,
+                left: `${(grid.col * 20) + 2}%`,
+                width: '16%',
+                height: '16%',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -165,10 +165,9 @@ const VisualizationTab = ({
     return 'translate(-50%, 50%)';
   };
 
-  // 모드별 설명 텍스트
   const getModeDescription = () => {
     if (selectedMode === '자동') {
-      return '추적 중 - 22도 이상 구역에 자동분사';
+      return '추적 중 - 가축 감지 시 22도 이상이면 자동분사';
     } else if (selectedMode === '수동') {
       return '순찰 중 - 클릭한 구역에만 분사';
     }
@@ -206,9 +205,11 @@ const VisualizationTab = ({
                 <div className="grid-line vertical-1"></div>
                 <div className="grid-line vertical-2"></div>
                 <div className="grid-line vertical-3"></div>
+                <div className="grid-line vertical-4"></div>
                 <div className="grid-line horizontal-1"></div>
                 <div className="grid-line horizontal-2"></div>
                 <div className="grid-line horizontal-3"></div>
+                <div className="grid-line horizontal-4"></div>
                 
                 {/* 온도 표시 - 수동 모드에서 클릭 가능 */}
                 <GridTemperatureOverlay />
@@ -269,7 +270,7 @@ const VisualizationTab = ({
               </span>
             </div>
             <div className="camera-status">
-              <span>인체 감지:</span>
+              <span>가축 감지:</span>
               <span style={{color: humanDetected ? '#10b981' : '#6b7280'}}>
                 {humanDetected ? '감지됨' : '감지 안됨'}
               </span>
