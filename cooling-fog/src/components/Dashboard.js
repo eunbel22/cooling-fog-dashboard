@@ -357,10 +357,6 @@ const Dashboard = () => {
                 <span className="status-text">{isConnected ? '실시간 연결' : '연결 끊김'}</span>
               </div>
               <div className="status-item">
-                <img src="/assets/icons/water-icon.svg" alt="Water" className="status-icon" />
-                <span className="status-text">{humidity}%</span>
-              </div>
-              <div className="status-item">
                 <div className={`status-dot ${deviceControl.isRunning ? 'active' : 'inactive'}`}></div>
                 <span className="status-text">{getSprayStatus()}</span>
               </div>
