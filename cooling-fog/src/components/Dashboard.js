@@ -106,13 +106,14 @@ const Dashboard = () => {
           break;
           
         case 'device_status':
-          // 웹소켓 상태 동기화 임시 비활성화 (탭 전환 문제 해결을 위해)
-          console.log('📡 [웹소켓] device_status 수신 (무시됨):', { 
+          // 웹소켓 상태 동기화 완전 비활성화 (탭 전환 문제 해결을 위해)
+          console.log('📡 [웹소켓] device_status 수신 (완전 무시됨):', { 
             서버_isRunning: data.is_running, 
             현재_isRunning: deviceControl.isRunning,
             서버_mode: data.tracking_mode,
             현재_mode: deviceControl.selectedMode
           });
+          // ⚠️ 모든 웹소켓 상태 동기화를 무시합니다
           // deviceControl.setIsRunning(data.is_running);
           // deviceControl.setSelectedMode(data.tracking_mode);
           break;

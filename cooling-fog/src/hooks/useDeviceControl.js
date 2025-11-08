@@ -91,10 +91,8 @@ export const useDeviceControl = (setIsLoading, setError) => {
   };
 
   const forceSetSelectedMode = (newMode) => {
-    if (newMode !== selectedMode) {
-      setSelectedMode(newMode);
-      console.log(`📡 [외부 동기화] selectedMode: ${selectedMode} → ${newMode}`);
-    }
+    console.log('⚠️ [외부 동기화 무시] selectedMode 설정 시도 무시됨:', newMode);
+    // 외부에서의 모드 변경도 무시
   };
   
   return {
