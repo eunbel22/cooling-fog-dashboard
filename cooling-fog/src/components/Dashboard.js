@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [temperature, setTemperature] = useState(28.5);
   const [humidity, setHumidity] = useState(65);
+  const [waterTank, setWaterTank] = useState(70);
   const [humanDetected, setHumanDetected] = useState(true);
   const [distance, setDistance] = useState(2.3);
   const [direction, setDirection] = useState('북쪽');
@@ -26,7 +27,7 @@ const Dashboard = () => {
   // 커스텀 훅 사용
   const deviceControl = useDeviceControl(setIsLoading, setError);
   const scheduleManager = useScheduleManager();
-  const visualization = useVisualization(deviceControl.selectedMode, humanDetected);
+  const visualization = useVisualization(deviceControl.selectedMode, humanDetected, deviceControl.isRunning);
 
   // 모달 상태
   const [isNewScheduleModalOpen, setIsNewScheduleModalOpen] = useState(false);
@@ -65,8 +66,11 @@ const Dashboard = () => {
     
     if (humidities.length > 0) {
       const avgHumidity = humidities.reduce((sum, humidity) => sum + humidity, 0) / humidities.length;
-      setHumidity(Math.round(avgHumidity)); // 정수로 반올림
+      const roundedHumidity = Math.round(avgHumidity);
+      setHumidity(roundedHumidity); // 정수로 반올림
+      setWaterTank(roundedHumidity); // 물탱크도 습도와 동일하게 설정
       console.log(`💧 [평균 습도] ${humidities.length}개 격자 평균: ${avgHumidity.toFixed(1)}%`);
+      console.log(`🚰 [물탱크] 습도와 동일하게 설정: ${roundedHumidity}%`);
     }
   }, [visualization.gridHumidities]);
 
@@ -86,7 +90,10 @@ const Dashboard = () => {
       const { type, data } = lastMessage;
       
       switch (type) {
-                
+        case 'sensor_data':
+          // setWaterTank(data.water_tank_level); // 주석 처리 - 습도와 동일하게 유지
+          break;
+          
         case 'tracking_data':
           setHumanDetected(data.human_detected);
           setDistance(data.distance);
@@ -107,7 +114,7 @@ const Dashboard = () => {
   // 가축 감지 랜덤 시뮬레이션 (테스트용) - 5초마다 70% 확률로 감지
   useEffect(() => {
     const interval = setInterval(() => {
-      const randomDetected = Math.random() > 0.7; // 30% 확률로 감지
+      const randomDetected = Math.random() > 0.3; // 70% 확률로 감지
       setHumanDetected(randomDetected);
       console.log('🔄 [시간] 가축 감지 상태 변경:', randomDetected ? '감지됨' : '감지 안됨');
     }, 5000); // 5초마다 변경
@@ -118,7 +125,7 @@ const Dashboard = () => {
   // 구역 변경 시 가축 감지 랜덤 설정 (테스트용) - 60% 확률로 감지
   useEffect(() => {
     if (visualization.patrolCurrentGrid !== undefined) {
-      const randomDetected = Math.random() > 0.8; // 20% 확률로 감지
+      const randomDetected = Math.random() > 0.4; // 60% 확률로 감지
       setHumanDetected(randomDetected);
       console.log(`📍 [구역 ${visualization.patrolCurrentGrid}] 가축 감지:`, randomDetected ? '감지됨' : '감지 안됨');
     }
@@ -175,6 +182,7 @@ const Dashboard = () => {
       
       setTemperature(sensorResponse.data.temperature);
       setHumidity(sensorResponse.data.humidity);
+      setWaterTank(sensorResponse.data.humidity); // 습도와 동일하게 설정
       
       setHumanDetected(trackingResponse.data.human_detected);
       setDistance(trackingResponse.data.distance);
@@ -189,6 +197,7 @@ const Dashboard = () => {
   };
 
   // 안전 상태 함수들
+  const getSafetyStatus = () => (waterTank < 10) ? 'unsafe' : 'safe';
   const getSprayStatus = () => deviceControl.isRunning ? '동작' : '정지';
 
   // 모달 핸들러들
@@ -335,6 +344,10 @@ const Dashboard = () => {
                 <span className="status-text">{isConnected ? '실시간 연결' : '연결 끊김'}</span>
               </div>
               <div className="status-item">
+                <img src="/assets/icons/water-icon.svg" alt="Water" className="status-icon" />
+                <span className="status-text">{humidity}%</span>
+              </div>
+              <div className="status-item">
                 <div className={`status-dot ${deviceControl.isRunning ? 'active' : 'inactive'}`}></div>
                 <span className="status-text">{getSprayStatus()}</span>
               </div>
@@ -342,7 +355,12 @@ const Dashboard = () => {
           </div>
         </div>
 
-        
+        {/* 안전상태 경고 */}
+        {getSafetyStatus() === 'unsafe' && (
+          <div className="safety-alert">
+            <strong>⚠️ 주의</strong> 물탱크 부족
+          </div>
+        )}
 
         {/* 탭 네비게이션 - '제어' 탭 제거 */}
         <div className="tab-navigation">
@@ -591,8 +609,8 @@ const Dashboard = () => {
                   onChange={(e) => setNewSchedule(prev => ({...prev, mode: e.target.value}))}
                   className="form-select"
                 >
-                  <option value="자동">자동</option>
-                  <option value="수동">수동</option>
+                  <option value="자동">추적</option>
+                  <option value="수동">순찰</option>
                 </select>
               </div>
 

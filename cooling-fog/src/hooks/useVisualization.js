@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GRID_POSITIONS, PATROL_SEQUENCE, generateGridTemperature, generateGridHumidity } from '../utils/gridUtils';
 
-export const useVisualization = (selectedMode, humanDetected) => {
+export const useVisualization = (selectedMode, humanDetected, isRunning) => {
   const [manualTargetGrid, setManualTargetGrid] = useState(null);
   const [patrolSequenceIndex, setPatrolSequenceIndex] = useState(0);
   const [gridTemperatures, setGridTemperatures] = useState({});
@@ -13,6 +13,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
   const humanDetectedRef = useRef(humanDetected);
   const isSprayingRef = useRef(false);
   const selectedModeRef = useRef(selectedMode);
+  const isRunningRef = useRef(isRunning);
 
   // ref 업데이트
   useEffect(() => {
@@ -26,6 +27,18 @@ export const useVisualization = (selectedMode, humanDetected) => {
   useEffect(() => {
     selectedModeRef.current = selectedMode;
   }, [selectedMode]);
+
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
+
+  // 긴급정지 시 즉시 분사 중단
+  useEffect(() => {
+    if (!isRunning) {
+      setIsSpraying(false);
+      console.log('🛑 [긴급정지] 순찰 및 분사 즉시 중단');
+    }
+  }, [isRunning]);
 
   // 현재 순찰 중인 실제 그리드 인덱스
   const patrolCurrentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
@@ -88,6 +101,13 @@ export const useVisualization = (selectedMode, humanDetected) => {
     
     // 10초 분사
     setTimeout(() => {
+      // ⭐ 분사 중에 정지되었는지 확인
+      if (!isRunningRef.current) {
+        setIsSpraying(false);
+        console.log('🛑 [분사 중 정지] 분사 중단됨');
+        return;
+      }
+
       const stillHumanDetected = humanDetectedRef.current;
       
       if (stillHumanDetected) {
@@ -99,21 +119,21 @@ export const useVisualization = (selectedMode, humanDetected) => {
         setTimeout(() => {
           const shouldContinue = newTemp >= 22;
           
-          if (shouldContinue) {
-            // 가축 감지 + 고온 → 계속 분사
+          if (shouldContinue && isRunningRef.current) {
+            // 가축 감지 + 고온 + 동작 중 → 계속 분사
             console.log(`🔄 [구역 ${gridIndex}] 가축 여전히 감지 + 고온 → 계속 분사 (가축: 감지됨, 온도: ${newTemp}°C)`);
             executeAutoSpray(gridIndex, newTemp);
           } else {
-            // 가축 감지되지만 저온 → 다음 구역
-            console.log(`❄️ [구역 ${gridIndex}] 가축 감지되지만 저온 → 다음 구역 (가축: 감지됨, 온도: ${newTemp}°C)`);
-            moveToNextGrid();
+            // 가축 감지되지만 저온이거나 정지됨 → 다음 구역
+            console.log(`❄️ [구역 ${gridIndex}] 가축 감지되지만 저온 또는 정지됨 → 다음 구역 (가축: 감지됨, 온도: ${newTemp}°C)`);
+            if (isRunningRef.current) moveToNextGrid();
           }
         }, 100);
       } else {
         // 가축 미감지 → 온도 측정 없이 바로 다음 구역
         setIsSpraying(false);
         console.log(`👻 [구역 ${gridIndex}] 가축 미감지 → 다음 구역으로 이동`);
-        setTimeout(moveToNextGrid, 100);
+        if (isRunningRef.current) setTimeout(moveToNextGrid, 100);
       }
     }, 10000); // 10초 분사
   };
@@ -126,10 +146,11 @@ export const useVisualization = (selectedMode, humanDetected) => {
   - 현재 모드: ${selectedModeRef.current}
   - 현재 순찰 구역: ${patrolCurrentGrid}
   - 분사 중: ${isSprayingRef.current}
+  - 동작 중: ${isRunningRef.current}
     `);
     
-    // 수동 모드이고 분사 중이 아닐 때만 동작
-    if (selectedModeRef.current === '수동' && !isSprayingRef.current) {
+    // 수동 모드이고 분사 중이 아니고 동작 중일 때만 동작
+    if (selectedModeRef.current === '수동' && !isSprayingRef.current && isRunningRef.current) {
       setManualTargetGrid(gridIndex);
       
       // 클릭한 구역으로 즉시 이동
@@ -137,6 +158,9 @@ export const useVisualization = (selectedMode, humanDetected) => {
       
       // 이동 후 2초 대기 (이동 애니메이션)
       setTimeout(() => {
+        // 정지되었는지 다시 확인
+        if (!isRunningRef.current) return;
+
         // 온도/습도 측정
         const temp = measureTemperature(gridIndex);
         measureHumidity(gridIndex);
@@ -154,13 +178,15 @@ export const useVisualization = (selectedMode, humanDetected) => {
           console.log(`✅ [구역 ${gridIndex}] 분사 완료 - 다음 구역으로 이동`);
           
           // 다음 구역으로 순찰 재개
-          setTimeout(() => {
-            moveToNextGrid();
-          }, 100);
+          if (isRunningRef.current) {
+            setTimeout(() => {
+              moveToNextGrid();
+            }, 100);
+          }
         }, 10000); // 10초 분사
       }, 2000); // 2초 이동 시간
     } else {
-      console.log(`❌ 클릭 무시: 조건 불만족 (모드: ${selectedModeRef.current}, 분사중: ${isSprayingRef.current})`);
+      console.log(`❌ 클릭 무시: 조건 불만족 (모드: ${selectedModeRef.current}, 분사중: ${isSprayingRef.current}, 동작중: ${isRunningRef.current})`);
     }
   };
 
@@ -184,8 +210,8 @@ export const useVisualization = (selectedMode, humanDetected) => {
 
   // 통합된 순찰 로직 - 모드별 동작 구분
   useEffect(() => {
-    // 분사 중이면 실행 안함
-    if (isSpraying) return;
+    // ⭐ isRunning이 false이거나 분사 중이면 실행 안함
+    if (!isRunning || isSpraying) return;
 
     // 첫 마운트 시에만 초기화 플래그 설정
     if (!isInitialized && patrolSequenceIndex === 0) {
@@ -197,6 +223,9 @@ export const useVisualization = (selectedMode, humanDetected) => {
     
     // 2초 후 모드별 동작
     const measureTimer = setTimeout(() => {
+      // ⭐ 타이머 실행 중에도 isRunning 상태 다시 확인
+      if (!isRunningRef.current) return;
+      
       if (selectedModeRef.current === '자동') {
         // 자동 모드(추적): 가축 감지 우선 확인
         if (humanDetectedRef.current) {
@@ -226,7 +255,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
         
         // 2초 대기 후 클릭 없으면 다음 구역으로 이동
         const waitTimer = setTimeout(() => {
-          if (!isSprayingRef.current) {
+          if (!isSprayingRef.current && isRunningRef.current) {
             console.log(`➡️ [구역 ${currentGrid}] 클릭 없음 - 다음 구역으로 이동`);
             moveToNextGrid();
           }
@@ -237,7 +266,7 @@ export const useVisualization = (selectedMode, humanDetected) => {
     }, 2000);
     
     return () => clearTimeout(measureTimer);
-  }, [patrolSequenceIndex, isSpraying, isInitialized]);
+  }, [patrolSequenceIndex, isSpraying, isInitialized, isRunning]);
 
 
   return {
