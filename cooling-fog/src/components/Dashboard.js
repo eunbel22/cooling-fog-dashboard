@@ -74,6 +74,11 @@ const Dashboard = () => {
     }
   }, [visualization.gridHumidities]);
 
+  // 탭 변경 시 상태 동기화 확인 (디버깅용)
+  useEffect(() => {
+    console.log(`🔄 [탭 전환] ${activeTab} | isRunning: ${deviceControl.isRunning} | selectedMode: ${deviceControl.selectedMode}`);
+  }, [activeTab, deviceControl.isRunning, deviceControl.selectedMode]);
+
   // 탭 변경시 데이터 로드
   useEffect(() => {
     if (activeTab === '대시보드') {
@@ -103,6 +108,7 @@ const Dashboard = () => {
         case 'device_status':
           deviceControl.setIsRunning(data.is_running);
           deviceControl.setSelectedMode(data.tracking_mode);
+          console.log('📡 [웹소켓] 기기 상태 동기화:', { isRunning: data.is_running, mode: data.tracking_mode });
           break;
           
         default:
@@ -342,10 +348,6 @@ const Dashboard = () => {
               <div className="status-item">
                 <img src="/assets/icons/wifi-icon.svg" alt="WiFi" className="status-icon" />
                 <span className="status-text">{isConnected ? '실시간 연결' : '연결 끊김'}</span>
-              </div>
-              <div className="status-item">
-                <img src="/assets/icons/water-icon.svg" alt="Water" className="status-icon" />
-                <span className="status-text">{humidity}%</span>
               </div>
               <div className="status-item">
                 <div className={`status-dot ${deviceControl.isRunning ? 'active' : 'inactive'}`}></div>
