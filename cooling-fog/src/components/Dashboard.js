@@ -106,9 +106,15 @@ const Dashboard = () => {
           break;
           
         case 'device_status':
-          deviceControl.setIsRunning(data.is_running);
-          deviceControl.setSelectedMode(data.tracking_mode);
-          console.log('📡 [웹소켓] 기기 상태 동기화:', { isRunning: data.is_running, mode: data.tracking_mode });
+          // 웹소켓 상태 동기화 임시 비활성화 (탭 전환 문제 해결을 위해)
+          console.log('📡 [웹소켓] device_status 수신 (무시됨):', { 
+            서버_isRunning: data.is_running, 
+            현재_isRunning: deviceControl.isRunning,
+            서버_mode: data.tracking_mode,
+            현재_mode: deviceControl.selectedMode
+          });
+          // deviceControl.setIsRunning(data.is_running);
+          // deviceControl.setSelectedMode(data.tracking_mode);
           break;
           
         default:
@@ -348,6 +354,10 @@ const Dashboard = () => {
               <div className="status-item">
                 <img src="/assets/icons/wifi-icon.svg" alt="WiFi" className="status-icon" />
                 <span className="status-text">{isConnected ? '실시간 연결' : '연결 끊김'}</span>
+              </div>
+              <div className="status-item">
+                <img src="/assets/icons/water-icon.svg" alt="Water" className="status-icon" />
+                <span className="status-text">{humidity}%</span>
               </div>
               <div className="status-item">
                 <div className={`status-dot ${deviceControl.isRunning ? 'active' : 'inactive'}`}></div>
