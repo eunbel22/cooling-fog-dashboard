@@ -89,18 +89,23 @@ const Dashboard = () => {
   }, [activeTab]);
 
   
-  // 웹소켓 메시지 처리 - 수정된 부분
+  // 웹소켓 메시지 처리 - 센서 값 실제 업데이트 추가!
   useEffect(() => {
     if (lastMessage) {
       const { type, data } = lastMessage;
       
       switch (type) {
         case 'sensor_data':
-          // 온도, 습도 처리
+          // 온도, 습도 실제로 업데이트!
           if (data.temperature !== undefined) {
-            console.log(`📊 [센서] 온도: ${data.temperature}°C, 습도: ${data.humidity}%`);
+            setTemperature(data.temperature);
+            console.log(`📊 [센서→화면] 온도: ${data.temperature}°C`);
           }
-          // setWaterTank는 주석 처리 - 습도와 동일하게 유지
+          if (data.humidity !== undefined) {
+            setHumidity(data.humidity);
+            setWaterTank(data.humidity); // 물탱크도 습도와 동일하게
+            console.log(`💧 [센서→화면] 습도: ${data.humidity}%`);
+          }
           break;
           
         case 'position_data':
