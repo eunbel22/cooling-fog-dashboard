@@ -158,7 +158,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
 
       // ✅ 라즈베리로 명령 전송
       sendMessage({
-        type: "device_control",
+        type: "control",
         command: "move_to_grid",
         value: gridIndex
       });
