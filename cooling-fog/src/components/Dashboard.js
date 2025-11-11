@@ -88,7 +88,6 @@ const Dashboard = () => {
       const avgH = hums.reduce((a, b) => a + b, 0) / hums.length;
       const rounded = Math.round(avgH);
       setHumidity(rounded);
-      setWaterTank(rounded);
       console.log(`💧 [평균 습도] ${hums.length}개 격자 평균: ${avgH.toFixed(1)}%`);
     }
   }, [visualization.gridHumidities]);
@@ -153,8 +152,6 @@ const Dashboard = () => {
 
       case 'tracking_data':
         setHumanDetected(data.human_detected);
-        setDistance(data.distance);
-        setDirection(data.direction);
         break;
 
       default:
@@ -300,11 +297,8 @@ const Dashboard = () => {
       
       setTemperature(sensorResponse.data.temperature);
       setHumidity(sensorResponse.data.humidity);
-      setWaterTank(sensorResponse.data.humidity); // 습도와 동일하게 설정
       
       setHumanDetected(trackingResponse.data.human_detected);
-      setDistance(trackingResponse.data.distance);
-      setDirection(trackingResponse.data.direction);
       
     } catch (err) {
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -315,7 +309,6 @@ const Dashboard = () => {
   };
 
   // 안전 상태 함수들
-  const getSafetyStatus = () => (waterTank < 10) ? 'unsafe' : 'safe';
   const getSprayStatus = () => deviceControl.isRunning ? '동작' : '정지';
 
   // 모달 핸들러들
@@ -469,12 +462,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* 안전상태 경고 */}
-        {getSafetyStatus() === 'unsafe' && (
-          <div className="safety-alert">
-            <strong>⚠️ 주의</strong> 물탱크 부족
-          </div>
-        )}
+        
 
         {/* 탭 네비게이션 - '제어' 탭 제거 */}
         <div className="tab-navigation">
@@ -510,8 +498,6 @@ const Dashboard = () => {
           <VisualizationTab 
             selectedMode={deviceControl.selectedMode}
             humanDetected={humanDetected}
-            direction={direction}
-            distance={distance}
             isRunning={deviceControl.isRunning}
             isConnected={isConnected}
             manualTargetGrid={visualization.manualTargetGrid}
