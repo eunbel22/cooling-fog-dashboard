@@ -133,7 +133,8 @@ const Dashboard = () => {
         console.log(`📍 [위치] 현재 그리드 ${grid} | (${data.x}, ${data.y})`);
 
         // ✅ 실측값이 들어올 때만 updateGridData 호출
-        if (grid && grid >= 1 && grid <= 25) {
+        //if (grid && grid >= 1 && grid <= 25) 
+        if (grid !== undefined && grid >= 0 && grid < 25) {
           visualization.updateGridData(grid, rawTemperature, rawHumidity);
           console.log(`🗺️ [센서→시각화] 그리드 ${grid}에 실측값 반영 (${rawTemperature}°C, ${rawHumidity}%)`);
         }
