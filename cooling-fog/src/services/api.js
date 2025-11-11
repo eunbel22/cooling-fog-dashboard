@@ -110,21 +110,24 @@ export const deviceAPI = {
   getStatus: () => 
     api.get('/api/device/status'),
   
-  // 기기 시작 (레거시)
+  // ✅ 기기 시작 (새 API로 리다이렉트)
   start: () => 
-    api.post('/api/device/start'),
+    controlAPI.controlMotor('start'),
   
-  // 기기 정지 (레거시)
+  // ✅ 기기 정지 (새 API로 리다이렉트)
   stop: () => 
-    api.post('/api/device/stop'),
+    controlAPI.controlMotor('stop'),
   
   // 분사 강도 설정 (레거시)
   setSprayIntensity: (intensity) => 
     api.put('/api/device/spray-intensity', null, { params: { intensity } }),
   
-  // 추적 모드 설정 (레거시)
-  setTrackingMode: (mode) => 
-    api.put('/api/device/tracking-mode', null, { params: { mode } }),
+  // ✅ 추적 모드 설정 (새 API로 리다이렉트)
+  setTrackingMode: (mode) => {
+    // "자동" -> "auto", "수동" -> "manual" 변환
+    const apiMode = mode === '자동' ? 'auto' : 'manual';
+    return controlAPI.setMode(apiMode);
+  },
 };
 
 // ============= 스케줄 API =============
