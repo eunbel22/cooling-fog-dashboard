@@ -40,6 +40,23 @@ const useWebSocket = (url) => {
             const data = JSON.parse(event.data);
             console.log('📨 [WebSocket] 메시지 수신:', data);
             setLastMessage(data);
+
+            if (data.type === "sensor_data") {
+              const { grid, temperature, humidity, detected } = data.data;
+              window.dispatchEvent(new CustomEvent("sensorData", {
+                detail: { grid, temperature, humidity, detected }
+              }));
+            } else if (data.type === "position_data") {
+              const { current_grid } = data.data;
+              window.dispatchEvent(new CustomEvent("positionData", {
+                detail: { current_grid }
+              }));
+            } else if (data.type === "detection_data") {
+              const { livestock_detected } = data.data;
+              window.dispatchEvent(new CustomEvent("detectionData", {
+                detail: { livestock_detected }
+              }));
+            }
           } catch (err) {
             console.error('❌ [WebSocket] 메시지 파싱 오류:', err);
             console.error('   원본 데이터:', event.data);

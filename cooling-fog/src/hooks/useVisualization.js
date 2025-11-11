@@ -41,17 +41,23 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
   }, []);
 
   // ✅ WebSocket에서 들어온 실측 데이터 반영
-  const updateGridData = useCallback((gridIndex, temperature, humidity) => {
-    console.log(`🗺️ [실측 업데이트] 그리드 ${gridIndex}: ${temperature}°C, ${humidity}%`);
+  // ✅ WebSocket에서 들어온 실측 데이터 반영
+  const updateGridData = useCallback((gridIndex, temperature, humidity, detected = false) => {
+    // 감지 안된 경우 데이터 표시하지 않음
+    if (!detected) {
+      console.log(`🚫 [자동모드] 감지되지 않은 구역 ${gridIndex}, 온도 표시 스킵`);
+      return;
+    }
 
+    console.log(`🗺️ [감지됨] 구역 ${gridIndex}: ${temperature}°C, ${humidity}%`);
     setGridTemperatures(prev => ({
       ...prev,
-      [gridIndex]: typeof temperature === 'number' ? temperature : prev[gridIndex] ?? 0
+      [gridIndex]: typeof temperature === 'number' ? temperature : prev[gridIndex] ?? null
     }));
 
     setGridHumidities(prev => ({
       ...prev,
-      [gridIndex]: typeof humidity === 'number' ? humidity : prev[gridIndex] ?? 0
+      [gridIndex]: typeof humidity === 'number' ? humidity : prev[gridIndex] ?? null
     }));
   }, []);
 
@@ -193,6 +199,37 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
 
   const shouldShowTarget = useCallback(() => false, []);
   const shouldShowGridOverlay = useCallback(() => selectedMode === '수동', [selectedMode]);
+
+    // ✅ WebSocket 이벤트 수신 (전역 이벤트 기반)
+  useEffect(() => {
+    const handleSensor = (e) => {
+      const { grid, temperature, humidity, detected } = e.detail;
+      updateGridData(grid - 1, temperature, humidity, detected);
+    };
+
+    const handlePosition = (e) => {
+      const { current_grid } = e.detail;
+      updateCurrentGrid(current_grid);
+    };
+
+    const handleDetection = (e) => {
+      const { livestock_detected } = e.detail;
+      humanDetectedRef.current = livestock_detected;
+      console.log(`🐷 [가축 감지 이벤트 수신] ${livestock_detected}`);
+    };
+
+    // ✅ WebSocket에서 전달된 전역 이벤트 구독
+    window.addEventListener("sensorData", handleSensor);
+    window.addEventListener("positionData", handlePosition);
+    window.addEventListener("detectionData", handleDetection);
+
+    return () => {
+      window.removeEventListener("sensorData", handleSensor);
+      window.removeEventListener("positionData", handlePosition);
+      window.removeEventListener("detectionData", handleDetection);
+    };
+  }, [updateGridData, updateCurrentGrid]);
+
 
   // ✅ 자동 모드 로직 (WebSocket 기반)
   useEffect(() => {
