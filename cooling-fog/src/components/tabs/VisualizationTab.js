@@ -250,14 +250,37 @@ const VisualizationTab = ({
         </div>
 
         {/* 우측: 카메라 피드 */}
+        {/* 우측: 카메라 피드 */}
         <div className="camera-section">
           <h4>카메라 피드</h4>
           <div className="camera-feed">
-            <div className="camera-placeholder">
+            {isRunning && selectedMode === '자동' ? (
+              <img 
+                src="http://3.36.112.6:8050/camera/stream" 
+                alt="Camera Feed"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '0.5rem'
+                }}
+                onError={(e) => {
+                  console.error('카메라 스트림 로드 실패');
+                }}
+              />
+            ) : null}
+            <div 
+              className="camera-placeholder"
+              style={{
+                display: (isRunning && selectedMode === '자동') ? 'none' : 'flex'
+              }}
+            >
               <div>📹</div>
-              <div>카메라 연결 대기중</div>
+              <div>카메라 {selectedMode === '자동' ? '연결 대기중' : '비활성'}</div>
               <div style={{fontSize: '0.75rem', marginTop: '0.5rem'}}>
-                실시간 영상이 여기에 표시됩니다
+                {selectedMode === '자동' && isRunning 
+                  ? '실시간 영상이 여기에 표시됩니다' 
+                  : '자동 모드에서 시작 버튼을 누르세요'}
               </div>
             </div>
           </div>

@@ -16,7 +16,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [temperature, setTemperature] = useState(null);
   const [humidity, setHumidity] = useState(null);
-  const [humanDetected, setHumanDetected] = useState(true);
+  const [humanDetected, setHumanDetected] = useState(false);
   const [rawTemperature, setRawTemperature] = useState(null);
   const [rawHumidity, setRawHumidity] = useState(null);
 

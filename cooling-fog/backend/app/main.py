@@ -8,6 +8,9 @@ from app.websocket_manager import manager
 from pydantic import BaseModel
 import asyncio
 import json
+import httpx
+from fastapi.responses import StreamingResponse
+
 
 # 데이터베이스 테이블 생성
 device.Base.metadata.create_all(bind=engine)
@@ -311,3 +314,35 @@ async def startup_event():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8050)
+
+
+# ============= 카메라 스트림 프록시 =============
+
+@app.get("/camera/stream")
+async def camera_stream():
+    """카메라 MJPEG 스트림 프록시 (8051 → 8050)"""
+    async def generate():
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                async with client.stream("GET", "http://localhost:8051/video_feed") as response:
+                    async for chunk in response.aiter_bytes(chunk_size=1024):
+                        yield chunk
+        except Exception as e:
+            print(f"❌ 카메라 스트림 오류: {e}")
+            # 에러 시 빈 프레임 반환
+            yield b''
+    
+    return StreamingResponse(
+        generate(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+@app.get("/camera/health")
+async def camera_health():
+    """카메라 서버 상태 확인"""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get("http://localhost:8051/health")
+            return response.json()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
