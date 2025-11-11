@@ -324,7 +324,7 @@ async def camera_stream():
     async def generate():
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                async with client.stream("GET", "http://localhost:8051/video_feed") as response:
+                async with client.stream("GET", "http://192.168.0.78:8051/video_feed") as response:
                     async for chunk in response.aiter_bytes(chunk_size=1024):
                         yield chunk
         except Exception as e:
@@ -342,7 +342,7 @@ async def camera_health():
     """카메라 서버 상태 확인"""
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get("http://localhost:8051/health")
+            response = await client.get("http://192.168.0.78:8051/health")
             return response.json()
     except Exception as e:
         return {"status": "error", "message": str(e)}
