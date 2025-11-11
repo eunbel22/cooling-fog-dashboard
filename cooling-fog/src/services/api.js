@@ -95,12 +95,28 @@ export const cameraAPI = {
     api.get('/api/camera-data/latest'),
 };
 
+// ============= 추적 데이터 API (레거시 - 하위 호환성) =============
+
+export const trackingAPI = {
+  // 최신 추적 데이터 조회
+  getLatestData: () => 
+    api.get('/api/tracking-data/latest'),
+};
+
 // ============= 기기 제어 API (레거시 - 하위 호환성) =============
 
 export const deviceAPI = {
   // 기기 상태 조회
   getStatus: () => 
     api.get('/api/device/status'),
+  
+  // 기기 시작 (레거시)
+  start: () => 
+    api.post('/api/device/start'),
+  
+  // 기기 정지 (레거시)
+  stop: () => 
+    api.post('/api/device/stop'),
   
   // 분사 강도 설정 (레거시)
   setSprayIntensity: (intensity) => 
