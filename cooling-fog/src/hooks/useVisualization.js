@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GRID_POSITIONS, generateGridTemperature, generateGridHumidity } from '../utils/gridUtils';
 
-export const useVisualization = (selectedMode, humanDetected, isRunning) => {
+export const useVisualization = (selectedMode, humanDetected, isRunning, sendMessage) => {
   const [manualTargetGrid, setManualTargetGrid] = useState(null);
   const [currentGridIndex, setCurrentGridIndex] = useState(0); // ✅ WebSocket에서 받은 그리드 인덱스
   const [gridTemperatures, setGridTemperatures] = useState({});
@@ -151,8 +151,35 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
   };
 
   const handleGridClick = useCallback((gridIndex) => {
-    handleManualSpray(gridIndex);
+    console.log(`🖱️ [클릭] 구역 ${gridIndex}, 모드: ${selectedModeRef.current}`);
+
+    if (selectedModeRef.current === '수동' && !isSprayingRef.current && isRunningRef.current) {
+      setManualTargetGrid(gridIndex);
+
+      // ✅ 라즈베리로 명령 전송
+      sendMessage({
+        type: "device_control",
+        command: "move_to_grid",
+        value: gridIndex
+      });
+
+      setTimeout(() => {
+        if (!isRunningRef.current) return;
+
+        const temp = measureTemperature(gridIndex);
+        measureHumidity(gridIndex);
+
+        if (temp !== null) {
+          console.log(`👆 [구역 ${gridIndex}] 실측 분사 실행`);
+          setIsSpraying(true);
+          setTimeout(() => {
+            setIsSpraying(false);
+          }, 10000);
+        }
+      }, 2000);
+    }
   }, [gridTemperatures]);
+
 
   // ✅ 디바이스 위치 계산 (WebSocket 기반)
   const getDevicePositionByMode = useCallback(() => {

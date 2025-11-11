@@ -21,12 +21,13 @@ const Dashboard = () => {
   const [rawHumidity, setRawHumidity] = useState(null);
 
   // 웹소켓 연결
-  const { lastMessage, isConnected } = useWebSocket('ws://3.36.112.6:8050/ws/realtime');
+  const { lastMessage, isConnected, sendMessage } = useWebSocket('ws://3.36.112.6:8050/ws/realtime');
 
   // 커스텀 훅 사용
   const deviceControl = useDeviceControl(setIsLoading, setError);
   const scheduleManager = useScheduleManager();
-  const visualization = useVisualization(deviceControl.selectedMode, humanDetected, deviceControl.isRunning);
+  const visualization = useVisualization(deviceControl.selectedMode, humanDetected, deviceControl.isRunning, sendMessage);
+
 
   // 모달 상태
   const [isNewScheduleModalOpen, setIsNewScheduleModalOpen] = useState(false);
