@@ -111,6 +111,12 @@ const Dashboard = () => {
         case 'position_data':
           // 위치 데이터
           console.log(`📍 [위치] 그리드: ${data.current_grid}, 좌표: (${data.x}, ${data.y})`);
+          
+          // ⭐ 현재 위치의 격자에 실제 센서 값 업데이트
+          if (data.current_grid !== undefined && data.current_grid >= 1 && data.current_grid <= 25) {
+            visualization.updateGridData(data.current_grid, temperature, humidity);
+            console.log(`🗺️ [위치→격자] 그리드 ${data.current_grid}에 실제 센서 값 적용`);
+          }
           break;
           
         case 'detection_data':
@@ -150,7 +156,7 @@ const Dashboard = () => {
           break;
       }
     }
-  }, [lastMessage, deviceControl]);
+  }, [lastMessage, temperature, humidity, visualization]);
 
   // 가축 감지 랜덤 시뮬레이션 (테스트용) - 5초마다 70% 확률로 감지
   useEffect(() => {
