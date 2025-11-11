@@ -14,14 +14,11 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('대시보드');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [temperature, setTemperature] = useState(28.5);
-  const [humidity, setHumidity] = useState(65);
-  const [waterTank, setWaterTank] = useState(70);
+  const [temperature, setTemperature] = useState(null);
+  const [humidity, setHumidity] = useState(null);
   const [humanDetected, setHumanDetected] = useState(true);
-  const [distance, setDistance] = useState(2.3);
-  const [direction, setDirection] = useState('북쪽');
-  const [rawTemperature, setRawTemperature] = useState(28.5);
-  const [rawHumidity, setRawHumidity] = useState(65);
+  const [rawTemperature, setRawTemperature] = useState(null);
+  const [rawHumidity, setRawHumidity] = useState(null);
 
   // 웹소켓 연결
   const { lastMessage, isConnected } = useWebSocket('ws://3.36.112.6:8050/ws/realtime');
