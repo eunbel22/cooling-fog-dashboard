@@ -20,6 +20,8 @@ const Dashboard = () => {
   const [humanDetected, setHumanDetected] = useState(true);
   const [distance, setDistance] = useState(2.3);
   const [direction, setDirection] = useState('북쪽');
+  const [rawTemperature, setRawTemperature] = useState(28.5);
+  const [rawHumidity, setRawHumidity] = useState(65);
 
   // 웹소켓 연결
   const { lastMessage, isConnected } = useWebSocket('ws://3.36.112.6:8050/ws/realtime');
@@ -96,15 +98,13 @@ const Dashboard = () => {
       
       switch (type) {
         case 'sensor_data':
-          // 온도, 습도 실제로 업데이트!
           if (data.temperature !== undefined) {
-            setTemperature(data.temperature);
-            console.log(`📊 [센서→화면] 온도: ${data.temperature}°C`);
+            setRawTemperature(data.temperature); // 원본만 저장
+            console.log(`📊 [센서→원본] 온도: ${data.temperature}°C`);
           }
           if (data.humidity !== undefined) {
-            setHumidity(data.humidity);
-            setWaterTank(data.humidity); // 물탱크도 습도와 동일하게
-            console.log(`💧 [센서→화면] 습도: ${data.humidity}%`);
+            setRawHumidity(data.humidity); // 원본만 저장
+            console.log(`💧 [센서→원본] 습도: ${data.humidity}%`);
           }
           break;
           
@@ -114,7 +114,7 @@ const Dashboard = () => {
           
           // ⭐ 현재 위치의 격자에 실제 센서 값 업데이트
           if (data.current_grid !== undefined && data.current_grid >= 1 && data.current_grid <= 25) {
-            visualization.updateGridData(data.current_grid, temperature, humidity);
+            visualization.updateGridData(data.current_grid, rawTemperature, rawHumidity);
             console.log(`🗺️ [위치→격자] 그리드 ${data.current_grid}에 실제 센서 값 적용`);
           }
           break;
@@ -156,7 +156,7 @@ const Dashboard = () => {
           break;
       }
     }
-  }, [lastMessage, temperature, humidity, visualization]);
+  }, [lastMessage, rawTemperature, rawHumidity, visualization]);
 
   // 가축 감지 랜덤 시뮬레이션 (테스트용) - 5초마다 70% 확률로 감지
   useEffect(() => {
