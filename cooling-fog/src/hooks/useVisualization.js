@@ -80,7 +80,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
 
 
   // 온도 측정 함수 (previousTemp: 이전 온도값)
-  const measureTemperature = (gridIndex, previousTemp = null) => {
+  /*const measureTemperature = (gridIndex, previousTemp = null) => {
     let temp;
     
     if (previousTemp !== null && typeof previousTemp === 'number') {
@@ -111,7 +111,40 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
       [gridIndex]: humidity
     }));
     return humidity;
+  };*/
+
+  // 온도 측정 함수
+  const measureTemperature = (gridIndex, previousTemp = null) => {
+    // 실측 센서가 활성화되어 있을 때는 랜덤 금지
+    if (selectedModeRef.current === '수동') {
+      console.log(`🌡️ [수동모드] 그리드 ${gridIndex} 실측 대기 중 - 랜덤 측정 생략`);
+      return gridTemperatures[gridIndex] ?? 0;
+    }
+
+    let temp;
+    if (previousTemp !== null && typeof previousTemp === 'number') {
+      const coolingEffect = Math.random() * 2 + 1;
+      temp = Math.round((previousTemp - coolingEffect) * 10) / 10;
+    } else {
+      temp = generateGridTemperature(gridIndex);
+    }
+
+    setGridTemperatures(prev => ({ ...prev, [gridIndex]: temp }));
+    return temp;
   };
+
+  // 습도 측정 함수
+  const measureHumidity = (gridIndex) => {
+    if (selectedModeRef.current === '수동') {
+      console.log(`💧 [수동모드] 그리드 ${gridIndex} 실측 대기 중 - 랜덤 측정 생략`);
+      return gridHumidities[gridIndex] ?? 0;
+    }
+
+    const humidity = generateGridHumidity(gridIndex);
+    setGridHumidities(prev => ({ ...prev, [gridIndex]: humidity }));
+    return humidity;
+  };
+
 
   // 다음 구역으로 이동
   const moveToNextGrid = () => {

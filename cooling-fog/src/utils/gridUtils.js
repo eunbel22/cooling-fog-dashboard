@@ -54,7 +54,7 @@ export const PATROL_SEQUENCE = [
 ];
 
 // 구역별 온도 생성 함수 (실제로는 센서에서 측정)  
-export const generateGridTemperature = (gridIndex) => {
+/*export const generateGridTemperature = (gridIndex) => {
   // 각 구역마다 약간씩 다른 온도 범위 설정
   const baseTemp = 22; // 기본 온도
   const variation = Math.random() * 6 - 3; // -3도 ~ +3도 변화
@@ -68,5 +68,24 @@ export const generateGridHumidity = (gridIndex) => {
   const baseHumidity = 65; // 기본 습도
   const variation = Math.random() * 20 - 10; // -10% ~ +10% 변화
   const gridVariation = (gridIndex % 5) * 2; // 구역별 미세한 차이
+  return Math.round(baseHumidity + variation + gridVariation);
+};*/
+
+// 실제 센서 데이터 우선, 랜덤 생성은 테스트용
+const USE_RANDOM_DATA = false;
+
+export const generateGridTemperature = (gridIndex) => {
+  if (!USE_RANDOM_DATA) return null; // 센서 모드일 땐 null 반환
+  const baseTemp = 22;
+  const variation = Math.random() * 6 - 3;
+  const gridVariation = (gridIndex % 5) * 0.5;
+  return Math.round((baseTemp + variation + gridVariation) * 10) / 10;
+};
+
+export const generateGridHumidity = (gridIndex) => {
+  if (!USE_RANDOM_DATA) return null;
+  const baseHumidity = 65;
+  const variation = Math.random() * 20 - 10;
+  const gridVariation = (gridIndex % 5) * 2;
   return Math.round(baseHumidity + variation + gridVariation);
 };
