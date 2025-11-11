@@ -38,38 +38,9 @@ export const GRID_POSITIONS = [
   { row: 4, col: 4, name: "E5", position: { top: "90%", left: "90%" } }
 ];
 
-// ㄹ자 패턴 순회 순서 정의 (5x5)
-// A1→A2→A3→A4→A5 → B5→B4→B3→B2→B1 → C1→C2→C3→C4→C5 → D5→D4→D3→D2→D1 → E1→E2→E3→E4→E5
-export const PATROL_SEQUENCE = [
-  // 첫 번째 행: 왼쪽→오른쪽 (0→1→2→3→4)
-  0, 1, 2, 3, 4,
-  // 두 번째 행: 오른쪽→왼쪽 (9→8→7→6→5)
-  9, 8, 7, 6, 5,
-  // 세 번째 행: 왼쪽→오른쪽 (10→11→12→13→14)
-  10, 11, 12, 13, 14,
-  // 네 번째 행: 오른쪽→왼쪽 (19→18→17→16→15)
-  19, 18, 17, 16, 15,
-  // 다섯 번째 행: 왼쪽→오른쪽 (20→21→22→23→24)
-  20, 21, 22, 23, 24
-];
-
-// 구역별 온도 생성 함수 (실제로는 센서에서 측정)  
-/*export const generateGridTemperature = (gridIndex) => {
-  // 각 구역마다 약간씩 다른 온도 범위 설정
-  const baseTemp = 22; // 기본 온도
-  const variation = Math.random() * 6 - 3; // -3도 ~ +3도 변화
-  const gridVariation = (gridIndex % 5) * 0.5; // 구역별 미세한 차이
-  return Math.round((baseTemp + variation + gridVariation) * 10) / 10;
-};
-
-// 구역별 습도 생성 함수 (실제로는 센서에서 측정)
-export const generateGridHumidity = (gridIndex) => {
-  // 각 구역마다 약간씩 다른 습도 범위 설정
-  const baseHumidity = 65; // 기본 습도
-  const variation = Math.random() * 20 - 10; // -10% ~ +10% 변화
-  const gridVariation = (gridIndex % 5) * 2; // 구역별 미세한 차이
-  return Math.round(baseHumidity + variation + gridVariation);
-};*/
+// ✅ PATROL_SEQUENCE 제거됨!
+// 라즈베리파이가 이미 올바른 그리드 번호로 변환해서 전송하므로
+// 웹은 단순히 받은 current_grid 값을 사용하면 됩니다.
 
 // 실제 센서 데이터 우선, 랜덤 생성은 테스트용
 const USE_RANDOM_DATA = false;
@@ -88,4 +59,20 @@ export const generateGridHumidity = (gridIndex) => {
   const variation = Math.random() * 20 - 10;
   const gridVariation = (gridIndex % 5) * 2;
   return Math.round(baseHumidity + variation + gridVariation);
+};
+
+// ✅ 그리드 인덱스를 그리드 이름으로 변환하는 헬퍼 함수
+export const getGridName = (gridIndex) => {
+  if (gridIndex < 0 || gridIndex >= 25) return "Unknown";
+  return GRID_POSITIONS[gridIndex].name;
+};
+
+// ✅ 그리드 번호(1-25)를 인덱스(0-24)로 변환
+export const gridNumberToIndex = (gridNumber) => {
+  return gridNumber - 1;
+};
+
+// ✅ 그리드 인덱스(0-24)를 번호(1-25)로 변환
+export const gridIndexToNumber = (gridIndex) => {
+  return gridIndex + 1;
 };
