@@ -53,7 +53,7 @@ const Dashboard = () => {
   });
 
 
-  useEffect(() => {
+  /*useEffect(() => {
     const temps = Object.values(visualization.gridTemperatures);
     
     if (temps.length > 0) {
@@ -74,6 +74,26 @@ const Dashboard = () => {
       console.log(`💧 [평균 습도] ${humidities.length}개 격자 평균: ${avgHumidity.toFixed(1)}%`);
       console.log(`🚰 [물탱크] 습도와 동일하게 설정: ${roundedHumidity}%`);
     }
+  }, [visualization.gridHumidities]);*/
+
+   useEffect(() => {
+    const temps = Object.values(visualization.gridTemperatures);
+    if (temps.length > 0) {
+      const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
+      setTemperature(Number(avgTemp.toFixed(1)));
+      console.log(`📊 [평균 온도] ${temps.length}개 격자 평균: ${avgTemp.toFixed(1)}°C`);
+    }
+  }, [visualization.gridTemperatures]);
+
+  useEffect(() => {
+    const hums = Object.values(visualization.gridHumidities);
+    if (hums.length > 0) {
+      const avgH = hums.reduce((a, b) => a + b, 0) / hums.length;
+      const rounded = Math.round(avgH);
+      setHumidity(rounded);
+      setWaterTank(rounded);
+      console.log(`💧 [평균 습도] ${hums.length}개 격자 평균: ${avgH.toFixed(1)}%`);
+    }
   }, [visualization.gridHumidities]);
 
   // 탭 변경 시 상태 동기화 확인 (디버깅용)
@@ -91,8 +111,57 @@ const Dashboard = () => {
   }, [activeTab]);
 
   
-  // 웹소켓 메시지 처리 - 센서 값 실제 업데이트 추가!
+    // ✅ WebSocket 메시지 처리
   useEffect(() => {
+    if (!lastMessage) return;
+    const { type, data } = lastMessage;
+
+    switch (type) {
+      case 'sensor_data':
+        if (data.temperature !== undefined) {
+          setRawTemperature(data.temperature);
+          console.log(`🌡️ [센서] 온도 수신: ${data.temperature}°C`);
+        }
+        if (data.humidity !== undefined) {
+          setRawHumidity(data.humidity);
+          console.log(`💧 [센서] 습도 수신: ${data.humidity}%`);
+        }
+        break;
+
+      case 'position_data': {
+        const grid = data.current_grid;
+        console.log(`📍 [위치] 현재 그리드 ${grid} | (${data.x}, ${data.y})`);
+
+        // ✅ 실측값이 들어올 때만 updateGridData 호출
+        if (grid && grid >= 1 && grid <= 25) {
+          visualization.updateGridData(grid, rawTemperature, rawHumidity);
+          console.log(`🗺️ [센서→시각화] 그리드 ${grid}에 실측값 반영 (${rawTemperature}°C, ${rawHumidity}%)`);
+        }
+        break;
+      }
+
+      case 'detection_data':
+        setHumanDetected(!!data.livestock_detected);
+        console.log(`🐷 [가축 감지] ${data.livestock_detected ? '감지됨' : '감지 안됨'}`);
+        break;
+
+      case 'camera_data':
+        console.log(`📷 [카메라] 상태: ${data.status}, FPS: ${data.fps}`);
+        break;
+
+      case 'tracking_data':
+        setHumanDetected(data.human_detected);
+        setDistance(data.distance);
+        setDirection(data.direction);
+        break;
+
+      default:
+        break;
+    }
+  }, [lastMessage, rawTemperature, rawHumidity]);
+
+  // 웹소켓 메시지 처리 - 센서 값 실제 업데이트 추가!
+/*  useEffect(() => {
     if (lastMessage) {
       const { type, data } = lastMessage;
       
@@ -157,9 +226,9 @@ const Dashboard = () => {
       }
     }
   }, [lastMessage, rawTemperature, rawHumidity, visualization]);
-
+*/
   // 가축 감지 랜덤 시뮬레이션 (테스트용) - 5초마다 70% 확률로 감지
-  useEffect(() => {
+  /*useEffect(() => {
     const interval = setInterval(() => {
       const randomDetected = Math.random() > 0.3; // 70% 확률로 감지
       setHumanDetected(randomDetected);
@@ -167,16 +236,16 @@ const Dashboard = () => {
     }, 5000); // 5초마다 변경
     
     return () => clearInterval(interval);
-  }, []);
+  }, []);*/
 
   // 구역 변경 시 가축 감지 랜덤 설정 (테스트용) - 60% 확률로 감지
-  useEffect(() => {
+  /*useEffect(() => {
     if (visualization.patrolCurrentGrid !== undefined) {
       const randomDetected = Math.random() > 0.4; // 60% 확률로 감지
       setHumanDetected(randomDetected);
       console.log(`📍 [구역 ${visualization.patrolCurrentGrid}] 가축 감지:`, randomDetected ? '감지됨' : '감지 안됨');
     }
-  }, [visualization.patrolCurrentGrid]);
+  }, [visualization.patrolCurrentGrid]);*/
 
   // 스케줄 체크
   useEffect(() => {

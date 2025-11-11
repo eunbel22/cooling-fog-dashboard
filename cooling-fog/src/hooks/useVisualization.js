@@ -50,7 +50,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
   const patrolCurrentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
 
   // ⭐ 새로운 함수: 외부에서 격자 데이터 업데이트 (실제 센서 값)
-  const updateGridData = useCallback((gridIndex, temperature, humidity) => {
+  /*const updateGridData = useCallback((gridIndex, temperature, humidity) => {
     console.log(`🗺️ [격자 업데이트] 그리드 ${gridIndex}: ${temperature}°C, ${humidity}%`);
     
     setGridTemperatures(prev => ({
@@ -62,7 +62,22 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
       ...prev,
       [gridIndex]: humidity
     }));
+  }, []);*/
+
+  const updateGridData = useCallback((gridIndex, temperature, humidity) => {
+    console.log(`🗺️ [격자 업데이트] 그리드 ${gridIndex}: ${temperature}°C, ${humidity}%`);
+
+    setGridTemperatures(prev => ({
+      ...prev,
+      [gridIndex]: typeof temperature === 'number' ? temperature : prev[gridIndex] || 0
+    }));
+
+    setGridHumidities(prev => ({
+      ...prev,
+      [gridIndex]: typeof humidity === 'number' ? humidity : prev[gridIndex] || 0
+    }));
   }, []);
+
 
   // 온도 측정 함수 (previousTemp: 이전 온도값)
   const measureTemperature = (gridIndex, previousTemp = null) => {
