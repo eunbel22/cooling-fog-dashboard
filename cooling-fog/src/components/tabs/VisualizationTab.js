@@ -256,7 +256,7 @@ const VisualizationTab = ({
           <div className="camera-feed">
             {isRunning && selectedMode === '자동' ? (
               <img 
-                src="http://3.36.112.6:8050/camera/stream" 
+                src="http://192.168.0.78:8050/camera/stream" 
                 alt="Camera Feed"
                 style={{
                   width: '100%',
