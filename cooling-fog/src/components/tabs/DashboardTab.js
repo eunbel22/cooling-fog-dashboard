@@ -157,7 +157,7 @@ const DashboardTab = ({
             {/* 모드 설명 */}
             <div className="mode-description">
               {selectedMode === '자동' && (
-                <p>🌡️ 가축 감지 + 22도 이상 구역에 10초 분사</p>
+                <p>🌡️ 가축 감지 + 39도 이상 구역에 10초 분사</p>
               )}
               {selectedMode === '수동' && (
                 <p>👆 순찰 중 클릭한 구역에 10초 분사</p>
