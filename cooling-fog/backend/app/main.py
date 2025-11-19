@@ -324,7 +324,7 @@ async def camera_stream():
     async def generate():
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                async with client.stream("GET", "http://192.168.0.78:8051/video_feed") as response:
+                async with client.stream("GET", "http://localhost:8051/camera/stream") as response:
                     async for chunk in response.aiter_bytes(chunk_size=1024):
                         yield chunk
         except Exception as e:
