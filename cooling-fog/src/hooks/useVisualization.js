@@ -138,11 +138,21 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
 
       // ✅ 라즈베리로 명령만 전송 (분사 상태는 라즈베리파이에서 전송받음)
       console.log(`📤 [명령 전송] move_to_grid: ${gridIndex}`);
+      // 1) 먼저 STOP 보내기
       sendMessage({
         type: "device_control",
-        command: "move_to_grid",
-        value: gridIndex
+        command: "motor_control",
+        value: "stop"
       });
+
+      // 200ms 정도 대기 후 MOVE 실행
+      setTimeout(() => {
+        sendMessage({
+          type: "device_control",
+          command: "move_to_grid",
+          value: gridIndex
+        });
+      }, 200);
 
 
       // ❌ 제거: 웹에서 임의로 분사 표시하지 않음
