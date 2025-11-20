@@ -56,6 +56,12 @@ const useWebSocket = (url) => {
               window.dispatchEvent(new CustomEvent("detectionData", {
                 detail: { livestock_detected }
               }));
+            } else if (data.type === "spray_status") {
+              // ✅ 분사 상태 메시지 처리
+              const { spraying, grid } = data.data;
+              window.dispatchEvent(new CustomEvent("sprayStatus", {
+                detail: { spraying, grid }
+              }));
             }
           } catch (err) {
             console.error('❌ [WebSocket] 메시지 파싱 오류:', err);
