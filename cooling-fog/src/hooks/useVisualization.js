@@ -1,5 +1,7 @@
 import React from 'react';
-import '../../styles/tabs/VisualizationTab.css';
+
+import { GRID_POSITIONS, generateGridTemperature, generateGridHumidity } from '../utils/gridUtils';
+
 
 const VisualizationTab = ({
   selectedMode,
