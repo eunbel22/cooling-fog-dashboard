@@ -3,7 +3,7 @@ import { GRID_POSITIONS, generateGridTemperature, generateGridHumidity } from '.
 
 export const useVisualization = (selectedMode, humanDetected, isRunning, sendMessage) => {
   const [manualTargetGrid, setManualTargetGrid] = useState(null);
-  const [currentGridIndex, setCurrentGridIndex] = useState(0); // ✅ WebSocket에서 받은 그리드 인덱스
+  const [currentGridIndex, setCurrentGridIndex] = useState(20); // ✅ WebSocket에서 받은 그리드 인덱스
   const [gridTemperatures, setGridTemperatures] = useState({});
   const [gridHumidities, setGridHumidities] = useState({});
   const [isSpraying, setIsSpraying] = useState(false);
