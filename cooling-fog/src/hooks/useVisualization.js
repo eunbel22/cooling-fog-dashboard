@@ -40,25 +40,23 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
     setCurrentGridIndex(gridIndex);
   }, []);
 
-  // ✅ WebSocket에서 들어온 실측 데이터 반영
-  // ✅ WebSocket에서 들어온 실측 데이터 반영
   const updateGridData = useCallback((gridIndex, temperature, humidity, detected = false) => {
-    // 감지 안된 경우 데이터 표시하지 않음
-    if (!detected) {
-      console.log(`🚫 [자동모드] 감지되지 않은 구역 ${gridIndex}, 온도 표시 스킵`);
-      return;
-    }
+      // ✅ 수동 모드에서는 detected 여부와 관계없이 온도 표시
+      if (selectedModeRef.current === '자동' && !detected) {
+        console.log(`🚫 [자동모드] 감지되지 않은 구역 ${gridIndex}, 온도 표시 스킵`);
+        return;
+      }
 
-    console.log(`🗺️ [감지됨] 구역 ${gridIndex}: ${temperature}°C, ${humidity}%`);
-    setGridTemperatures(prev => ({
-      ...prev,
-      [gridIndex]: typeof temperature === 'number' ? temperature : prev[gridIndex] ?? null
-    }));
+      console.log(`🗺️ [${selectedModeRef.current}] 구역 ${gridIndex}: ${temperature}°C, ${humidity}%`);
+      setGridTemperatures(prev => ({
+        ...prev,
+        [gridIndex]: typeof temperature === 'number' ? temperature : prev[gridIndex] ?? null
+      }));
 
-    setGridHumidities(prev => ({
-      ...prev,
-      [gridIndex]: typeof humidity === 'number' ? humidity : prev[gridIndex] ?? null
-    }));
+      setGridHumidities(prev => ({
+        ...prev,
+        [gridIndex]: typeof humidity === 'number' ? humidity : prev[gridIndex] ?? null
+      }));
   }, []);
 
   // ✅ 온도 측정 함수
