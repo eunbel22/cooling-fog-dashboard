@@ -1,20 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GRID_POSITIONS, generateGridTemperature, generateGridHumidity } from '../utils/gridUtils';
+import { GRID_POSITIONS, PATROL_SEQUENCE, generateGridTemperature, generateGridHumidity } from '../utils/gridUtils';
 
-export const useVisualization = (selectedMode, humanDetected, isRunning, sendMessage) => {
+export const useVisualization = (selectedMode, humanDetected, isRunning) => {
   const [manualTargetGrid, setManualTargetGrid] = useState(null);
-  const [currentGridIndex, setCurrentGridIndex] = useState(20); // ✅ E1 시작 (0-based)
+  const [patrolSequenceIndex, setPatrolSequenceIndex] = useState(0);
   const [gridTemperatures, setGridTemperatures] = useState({});
   const [gridHumidities, setGridHumidities] = useState({});
   const [isSpraying, setIsSpraying] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // 최신 상태를 유지하기 위한 ref
   const humanDetectedRef = useRef(humanDetected);
   const isSprayingRef = useRef(false);
   const selectedModeRef = useRef(selectedMode);
   const isRunningRef = useRef(isRunning);
   const previousIsRunningRef = useRef(isRunning);
 
+  // ref 업데이트
   useEffect(() => { humanDetectedRef.current = humanDetected; }, [humanDetected]);
   useEffect(() => { isSprayingRef.current = isSpraying; }, [isSpraying]);
   useEffect(() => { selectedModeRef.current = selectedMode; }, [selectedMode]);
@@ -23,6 +25,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
     isRunningRef.current = isRunning;
   }, [isRunning]);
 
+  // 긴급정지 처리
   useEffect(() => {
     const wasRunning = previousIsRunningRef.current;
     const isCurrentlyRunning = isRunning;
@@ -34,33 +37,26 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
     }
   }, [isRunning]);
 
-  // ✅ WebSocket에서 그리드 위치 업데이트
-  const updateCurrentGrid = useCallback((gridIndex) => {
-    console.log(`📍 [위치 업데이트] 그리드 인덱스: ${gridIndex}`);
-    setCurrentGridIndex(gridIndex);
-  }, []);
+  const patrolCurrentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
 
-  const updateGridData = useCallback((gridIndex, temperature, humidity, detected = false) => {
-      // ✅ 수동 모드에서는 detected 여부와 관계없이 온도 표시
-      if (selectedModeRef.current === '자동' && !detected) {
-        console.log(`🚫 [자동모드] 감지되지 않은 구역 ${gridIndex}, 온도 표시 스킵`);
-        return;
-      }
+  // ✅ WebSocket에서 들어온 실측 데이터 반영
+  const updateGridData = useCallback((gridIndex, temperature, humidity) => {
+    console.log(`🗺️ [실측 업데이트] 그리드 ${gridIndex}: ${temperature}°C, ${humidity}%`);
 
-      console.log(`🗺️ [${selectedModeRef.current}] 구역 ${gridIndex}: ${temperature}°C, ${humidity}%`);
-      setGridTemperatures(prev => ({
-        ...prev,
-        [gridIndex]: typeof temperature === 'number' ? temperature : prev[gridIndex] ?? null
-      }));
+    setGridTemperatures(prev => ({
+      ...prev,
+      [gridIndex]: typeof temperature === 'number' ? temperature : prev[gridIndex] ?? 0
+    }));
 
-      setGridHumidities(prev => ({
-        ...prev,
-        [gridIndex]: typeof humidity === 'number' ? humidity : prev[gridIndex] ?? null
-      }));
+    setGridHumidities(prev => ({
+      ...prev,
+      [gridIndex]: typeof humidity === 'number' ? humidity : prev[gridIndex] ?? 0
+    }));
   }, []);
 
   // ✅ 온도 측정 함수
   const measureTemperature = (gridIndex, previousTemp = null) => {
+    // 실측 센서가 활성화되어 있을 때는 랜덤 금지
     if (selectedModeRef.current === '수동') {
       const currentTemp = gridTemperatures[gridIndex];
       if (typeof currentTemp === 'number') {
@@ -68,11 +64,13 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
         return currentTemp;
       } else {
         console.log(`🌡️ [수동모드] 그리드 ${gridIndex} 실측 대기 중 (데이터 없음)`);
+        // 상태 유지하며 리렌더 유도
         setGridTemperatures(prev => ({ ...prev }));
         return null;
       }
     }
 
+    // 자동 모드일 때만 랜덤 시뮬레이션
     let temp;
     if (previousTemp !== null && typeof previousTemp === 'number') {
       const coolingEffect = Math.random() * 2 + 1;
@@ -99,12 +97,29 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
       }
     }
 
+    // 자동 모드용 랜덤 시뮬레이션
     const humidity = generateGridHumidity(gridIndex);
     setGridHumidities(prev => ({ ...prev, [gridIndex]: humidity }));
     return humidity;
   };
 
-  // ✅ 자동 모드: 분사 실행
+  // 다음 구역으로 이동
+  const moveToNextGrid = () => {
+    setPatrolSequenceIndex(prev => (prev + 1) % PATROL_SEQUENCE.length);
+    setIsSpraying(false);
+    setManualTargetGrid(null);
+  };
+
+  // 특정 구역으로 직접 이동 (수동 모드용) - 더 이상 사용 안 함
+  const moveToSpecificGrid = (targetGridIndex) => {
+    const sequenceIndex = PATROL_SEQUENCE.indexOf(targetGridIndex);
+    if (sequenceIndex !== -1) {
+      setPatrolSequenceIndex(sequenceIndex);
+      console.log(`🎯 [구역 ${targetGridIndex}] 즉시 이동`);
+    }
+  };
+
+  // 자동 모드(추적): 분사 실행
   const executeAutoSpray = (gridIndex, currentTemp) => {
     if (!isRunningRef.current) return;
     setIsSpraying(true);
@@ -123,106 +138,114 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
         setIsSpraying(false);
 
         if (newTemp >= 22) executeAutoSpray(gridIndex, newTemp);
-        else setIsSpraying(false);
+        else moveToNextGrid();
       } else {
         setIsSpraying(false);
+        moveToNextGrid();
       }
     }, 10000);
   };
 
-  const handleGridClick = useCallback((gridIndex) => {
+  // ⭐ 수동 모드: 클릭 시 해당 구역만 분사 (수정됨!)
+  const handleManualSpray = async (gridIndex) => {
     console.log(`🖱️ [클릭] 구역 ${gridIndex}, 모드: ${selectedModeRef.current}`);
 
     if (selectedModeRef.current === '수동' && !isSprayingRef.current && isRunningRef.current) {
       setManualTargetGrid(gridIndex);
+      
+      // ✅ 백엔드에 API 역쿼리: 그리드 이동 명령
+      try {
+        const gridNumber = gridIndex + 1; // 0-based를 1-based로 변환
+        const response = await fetch('http://3.36.112.6:8000/api/control/grid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ grid: gridNumber })
+        });
+        
+        if (!response.ok) {
+          console.error(`⚠️ 그리드 이동 API 오류: ${response.status}`);
+          return;
+        }
+        
+        const result = await response.json();
+        console.log(`📡 [API 응답] 그리드 ${gridNumber}로 이동 명령 전송 성공`, result);
+        
+      } catch (error) {
+        console.error('⚠️ 그리드 이동 API 호출 실패:', error);
+      }
 
-      // ✅ 라즈베리로 명령만 전송 (분사 상태는 라즈베리파이에서 전송받음)
-      console.log(`📤 [명령 전송] move_to_grid: ${gridIndex}`);
-      sendMessage({
-        type: "control",
-        command: "move_to_grid",
-        value: gridIndex
-      });
+      setTimeout(() => {
+        if (!isRunningRef.current) return;
 
-      // ❌ 제거: 웹에서 임의로 분사 표시하지 않음
-      // 분사 상태는 spray_status 이벤트로 수신
+        const temp = measureTemperature(gridIndex);
+        measureHumidity(gridIndex);
+
+        if (temp !== null) {
+          console.log(`💧 [구역 ${gridIndex}] 실측 분사 실행`);
+          setIsSpraying(true);
+          setTimeout(() => {
+            setIsSpraying(false);
+            moveToNextGrid();
+          }, 10000);
+        }
+      }, 2000);
     }
-  }, [sendMessage]);
+  };
 
-  // ✅ 디바이스 위치 계산 (WebSocket 기반)
+  const handleGridClick = useCallback((gridIndex) => {
+    handleManualSpray(gridIndex);
+  }, [patrolCurrentGrid, gridTemperatures]);
+
+  // 디바이스 위치 계산
   const getDevicePositionByMode = useCallback(() => {
-    const currentGrid = GRID_POSITIONS[currentGridIndex];
+    const currentGrid = GRID_POSITIONS[patrolCurrentGrid];
     return {
       bottom: `${100 - parseFloat(currentGrid.position.top)}%`,
       left: currentGrid.position.left,
       transform: 'translate(-50%, 50%)'
     };
-  }, [currentGridIndex]);
+  }, [patrolCurrentGrid]);
 
   const shouldShowTarget = useCallback(() => false, []);
   const shouldShowGridOverlay = useCallback(() => selectedMode === '수동', [selectedMode]);
 
-  // ✅ WebSocket 이벤트 수신 (전역 이벤트 기반)
+  // 순찰 로직 (자동 or 수동)
   useEffect(() => {
-    const handleSensor = (e) => {
-      const { grid, temperature, humidity, detected } = e.detail;
-      updateGridData(grid - 1, temperature, humidity, detected);
-    };
+    if (!isRunning || isSpraying) return;
 
-    const handlePosition = (e) => {
-      const { current_grid } = e.detail;
-      updateCurrentGrid(current_grid);
-    };
+    if (!isInitialized && patrolSequenceIndex === 0) {
+      setIsInitialized(true);
+    }
 
-    const handleDetection = (e) => {
-      const { livestock_detected } = e.detail;
-      humanDetectedRef.current = livestock_detected;
-      console.log(`🐷 [가축 감지 이벤트 수신] ${livestock_detected}`);
-    };
-
-    // ✅ 분사 상태 수신 (라즈베리파이에서 전송)
-    const handleSpray = (e) => {
-      const { spraying, grid } = e.detail;
-      setIsSpraying(spraying);
-      console.log(`💨 [분사 상태 수신] ${spraying ? '시작' : '완료'} - 그리드 ${grid}`);
-    };
-
-    // ✅ WebSocket에서 전달된 전역 이벤트 구독
-    window.addEventListener("sensorData", handleSensor);
-    window.addEventListener("positionData", handlePosition);
-    window.addEventListener("detectionData", handleDetection);
-    window.addEventListener("sprayStatus", handleSpray);
-
-    return () => {
-      window.removeEventListener("sensorData", handleSensor);
-      window.removeEventListener("positionData", handlePosition);
-      window.removeEventListener("detectionData", handleDetection);
-      window.removeEventListener("sprayStatus", handleSpray);
-    };
-  }, [updateGridData, updateCurrentGrid]);
-
-  // ✅ 자동 모드 로직 (WebSocket 기반)
-  useEffect(() => {
-    if (!isRunning || isSpraying || selectedMode !== '자동') return;
-
-    console.log(`🔍 구역 ${currentGridIndex} 도착`);
+    const currentGrid = PATROL_SEQUENCE[patrolSequenceIndex];
+    console.log(`🚀 구역 ${patrolSequenceIndex} (그리드 ${currentGrid}) 도착`);
 
     const measureTimer = setTimeout(() => {
       if (!isRunningRef.current) return;
 
-      if (humanDetectedRef.current) {
-        const temp = measureTemperature(currentGridIndex, false);
-        measureHumidity(currentGridIndex);
-        if (temp >= 22) executeAutoSpray(currentGridIndex, temp);
+      if (selectedModeRef.current === '자동') {
+        if (humanDetectedRef.current) {
+          const temp = measureTemperature(currentGrid, false);
+          measureHumidity(currentGrid);
+          if (temp >= 22) executeAutoSpray(currentGrid, temp);
+          else moveToNextGrid();
+        } else moveToNextGrid();
+      } else {
+        measureTemperature(currentGrid, false);
+        measureHumidity(currentGrid);
+        console.log(`⏸️ [수동모드] 구역 ${currentGrid} 측정 완료, 클릭 대기`);
+        setTimeout(() => {
+          if (!isSprayingRef.current && isRunningRef.current) moveToNextGrid();
+        }, 2000);
       }
     }, 2000);
 
     return () => clearTimeout(measureTimer);
-  }, [currentGridIndex, isSpraying, isRunning, selectedMode]);
+  }, [patrolSequenceIndex, isSpraying, isInitialized, isRunning]);
 
   return {
     manualTargetGrid,
-    patrolCurrentGrid: currentGridIndex,
+    patrolCurrentGrid,
     gridTemperatures,
     gridHumidities,
     GRID_POSITIONS,
@@ -231,7 +254,6 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
     getDevicePositionByMode,
     shouldShowTarget,
     shouldShowGridOverlay,
-    updateGridData,
-    updateCurrentGrid
+    updateGridData
   };
 };
