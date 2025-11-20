@@ -140,7 +140,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
       console.log(`📤 [명령 전송] move_to_grid: ${gridIndex}`);
       // 1) 먼저 STOP 보내기
       sendMessage({
-        type: "device_control",
+        type: "control",
         command: "motor_control",
         value: "stop"
       });
@@ -148,7 +148,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
       // 200ms 정도 대기 후 MOVE 실행
       setTimeout(() => {
         sendMessage({
-          type: "device_control",
+          type: "control",
           command: "move_to_grid",
           value: gridIndex
         });
