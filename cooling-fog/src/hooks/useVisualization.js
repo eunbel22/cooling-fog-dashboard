@@ -154,9 +154,16 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
       setManualTargetGrid(gridIndex);
       
       // ✅ 백엔드에 API 역쿼리: 그리드 이동 명령
+      // 🔧 수정: 동적 URL 사용 (현재 도메인 기반)
       try {
         const gridNumber = gridIndex + 1; // 0-based를 1-based로 변환
-        const response = await fetch('http://3.36.112.6:8000/api/control/grid', {
+        
+        // 현재 도메인 동적으로 가져오기
+        const apiUrl = `${window.location.origin}/api/control/grid`;
+        
+        console.log(`📤 API 호출: POST ${apiUrl}`, { grid: gridNumber });
+        
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ grid: gridNumber })
@@ -164,6 +171,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
         
         if (!response.ok) {
           console.error(`⚠️ 그리드 이동 API 오류: ${response.status}`);
+          console.error(`⚠️ 응답 텍스트:`, await response.text());
           return;
         }
         
@@ -172,6 +180,7 @@ export const useVisualization = (selectedMode, humanDetected, isRunning) => {
         
       } catch (error) {
         console.error('⚠️ 그리드 이동 API 호출 실패:', error);
+        console.error('⚠️ 에러 상세:', error.message);
       }
 
       setTimeout(() => {
