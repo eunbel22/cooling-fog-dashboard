@@ -139,10 +139,11 @@ export const useVisualization = (selectedMode, humanDetected, isRunning, sendMes
       // ✅ 라즈베리로 명령만 전송 (분사 상태는 라즈베리파이에서 전송받음)
       console.log(`📤 [명령 전송] move_to_grid: ${gridIndex}`);
       sendMessage({
-        type: "control",
+        type: "device_control",
         command: "move_to_grid",
         value: gridIndex
       });
+
 
       // ❌ 제거: 웹에서 임의로 분사 표시하지 않음
       // 분사 상태는 spray_status 이벤트로 수신
